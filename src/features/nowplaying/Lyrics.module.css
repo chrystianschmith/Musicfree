@@ -1,0 +1,53 @@
+.lyrics {
+  display: flex;
+  flex-direction: column;
+}
+.line {
+  margin: 0;
+  color: var(--text-3);
+  cursor: pointer;
+  transition:
+    color 0.3s,
+    transform 0.3s var(--ease-out);
+  transform-origin: left center;
+}
+.line:hover {
+  color: var(--text-2);
+}
+.past {
+  color: #3e3d46;
+}
+.now,
+.now:hover {
+  color: var(--text);
+}
+.sm .line {
+  font-size: 14px;
+  padding: 4px 0;
+}
+.sm .now {
+  transform: scale(1.06);
+}
+.lg .line {
+  font-size: 26px;
+  font-weight: 650;
+  padding: 7px 0;
+  letter-spacing: -0.3px;
+}
+.lg .now {
+  transform: scale(1.03);
+}
+.info {
+  color: var(--text-2);
+  font-size: 14px;
+}
+.plain {
+  font-family: inherit;
+  white-space: pre-wrap;
+  color: var(--text-2);
+  margin: 0;
+}
+.plain.lg {
+  font-size: 20px;
+  line-height: 1.7;
+}
