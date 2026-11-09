@@ -1,6 +1,8 @@
 dist
 src-tauri/target
 src-tauri/gen
+src-tauri/icons
 pnpm-lock.yaml
 playwright-report
 test-results
+docs/superpowers
