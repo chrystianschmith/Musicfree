@@ -1,7 +1,8 @@
 import type { Track } from "../../sources/types";
+import { useLibraryActions, useLikedIds } from "./usePlaylists";
 
-/** Temporary stub; replaced by the SQLite-backed implementation in Task 8. */
-export function useLike(_t: Track | undefined) {
-  void _t;
-  return { liked: false, toggle: () => undefined };
+export function useLike(t: Track | undefined) {
+  const ids = useLikedIds();
+  const actions = useLibraryActions();
+  return { liked: !!t && ids.has(t.id), toggle: () => t && void actions.toggleLike(t) };
 }

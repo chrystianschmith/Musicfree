@@ -15,6 +15,8 @@ for (const c of clicks) {
   if (c.startsWith("wait:")) await page.waitForTimeout(Number(c.slice(5)));
   else if (c.startsWith("type:")) await page.keyboard.type(c.slice(5), { delay: 30 });
   else if (c.startsWith("key:")) await page.keyboard.press(c.slice(4));
+  else if (c.startsWith("dbl:")) await page.locator(c.slice(4)).first().dblclick();
+  else if (c.startsWith("hover:")) await page.locator(c.slice(6)).first().hover();
   else await page.locator(c).first().click();
   await page.waitForTimeout(450);
 }
