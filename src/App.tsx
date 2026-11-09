@@ -3,6 +3,7 @@ import { HashRouter, Route, Routes } from "react-router-dom";
 import { Layout } from "./app/Layout";
 import { HomePage } from "./features/home/HomePage";
 import { ExplorePage } from "./features/explore/ExplorePage";
+import { SearchPage } from "./features/search/SearchPage";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 5 * 60_000, retry: 1, refetchOnWindowFocus: false } },
@@ -20,6 +21,7 @@ export default function App() {
           <Route element={<Layout />}>
             <Route index element={<HomePage />} />
             <Route path="explore" element={<ExplorePage />} />
+            <Route path="search" element={<SearchPage />} />
             <Route path="*" element={<Placeholder title="Em breve" />} />
           </Route>
         </Routes>
