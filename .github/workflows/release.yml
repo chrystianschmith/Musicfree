@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows
+            os: windows-latest
+            args: ""
+          - name: Linux
+            os: ubuntu-22.04
+            args: ""
+          - name: macOS (universal)
+            os: macos-latest
+            args: "--target universal-apple-darwin"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Linux dependencies
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.os == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: pnpm install --frozen-lockfile
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Musicfree ${{ github.ref_name }}"
+          releaseBody: |
+            ## Download
+
+            | System | File |
+            |---|---|
+            | Windows 10/11 | `Musicfree_*_x64-setup.exe` |
+            | macOS (Intel and Apple Silicon) | `Musicfree_*_universal.dmg` |
+            | Linux | `.AppImage` (any distro) or `.deb` (Debian/Ubuntu) |
+
+            The installers are not code-signed yet. On first launch Windows SmartScreen shows
+            "More info → Run anyway"; on macOS right-click the app and choose **Open**.
+            See the README for details.
+          releaseDraft: false
+          prerelease: ${{ startsWith(github.ref_name, 'v0.') }}
+          args: ${{ matrix.args }}
