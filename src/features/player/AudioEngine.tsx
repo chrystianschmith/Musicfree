@@ -17,6 +17,8 @@ export function AudioEngine() {
   const loadedId = useRef<string | undefined>(undefined);
   const retried = useRef(false);
   const prefetched = useRef<string | undefined>(undefined);
+  /** Track id already written to history for the current load (recorded on first real play). */
+  const historyFor = useRef<string | undefined>(undefined);
 
   const current = usePlayer((s) => s.current());
   const playing = usePlayer((s) => s.playing);
@@ -31,6 +33,7 @@ export function AudioEngine() {
     if (!el || !current) return;
     if (loadedId.current === current.id) return;
     loadedId.current = current.id;
+    historyFor.current = undefined;
     retried.current = false;
     prefetched.current = undefined;
     let cancelled = false;
@@ -41,15 +44,12 @@ export function AudioEngine() {
         const { seekRequest, playing: p } = usePlayer.getState();
         if (seekRequest) el.currentTime = seekRequest;
         if (p) void el.play().catch(() => undefined);
-        void getRepo()
-          .then((r) => r.pushHistory(current))
-          .then(() => qc.invalidateQueries({ queryKey: libKeys.history }));
       })
       .catch(() => fail(current.title));
     return () => {
       cancelled = true;
     };
-  }, [current]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [current]);
 
   useEffect(() => {
     const el = ref.current;
@@ -129,7 +129,16 @@ export function AudioEngine() {
       }}
       onLoadedMetadata={(e) => usePlayer.getState().setDuration(e.currentTarget.duration)}
       onEnded={() => usePlayer.getState().onEnded()}
-      onPlay={() => usePlayer.getState().setPlaying(true)}
+      onPlay={() => {
+        usePlayer.getState().setPlaying(true);
+        const cur = usePlayer.getState().current();
+        if (cur && historyFor.current !== cur.id) {
+          historyFor.current = cur.id;
+          void getRepo()
+            .then((r) => r.pushHistory(cur))
+            .then(() => qc.invalidateQueries({ queryKey: libKeys.history }));
+        }
+      }}
       onPause={(e) => !e.currentTarget.ended && usePlayer.getState().setPlaying(false)}
       onError={(e) => {
         const cur = usePlayer.getState().current();

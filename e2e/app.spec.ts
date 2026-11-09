@@ -69,3 +69,27 @@ test("restores the last queue paused after reload", async ({ page }) => {
   await expect(page.locator("footer")).toContainText("Avenida");
   await expect(page.locator("footer").getByRole("button", { name: "Tocar" })).toBeVisible();
 });
+
+test("queue tab lists upcoming tracks without render loops", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+  await page.goto("/#/album/al-neon");
+  await page.getByRole("listitem").filter({ hasText: "Luzes da cidade" }).dblclick();
+  await page.locator("footer").getByRole("button", { name: "Fila" }).click();
+  const np = page.locator('section[aria-label="Tocando agora"]');
+  await expect(np.getByRole("tab", { name: "A seguir" })).toHaveAttribute("aria-selected", "true");
+  await expect(np.getByRole("listitem").filter({ hasText: "Horizonte" })).toBeVisible();
+  expect(errors.filter((e) => /getSnapshot|Maximum update depth/i.test(e))).toEqual([]);
+});
+
+test("history records a track once per play, not on app start", async ({ page }) => {
+  await page.goto("/#/album/al-neon");
+  await page.getByRole("listitem").filter({ hasText: "Madrugada" }).dblclick();
+  await expect(page.locator("footer")).toContainText("Madrugada");
+  await page.waitForTimeout(600);
+  await page.reload();
+  await expect(page.locator("footer")).toContainText("Madrugada");
+  await page.getByRole("link", { name: "Histórico" }).click();
+  await expect(page.getByRole("listitem").filter({ hasText: "Madrugada" })).toHaveCount(1);
+});
