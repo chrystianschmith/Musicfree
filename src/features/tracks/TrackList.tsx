@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   IconClock,
@@ -21,6 +22,7 @@ type Props = {
   showAlbum?: boolean;
   showCover?: boolean;
   onRemove?(i: number): void;
+  onMove?(from: number, to: number): void;
   header?: boolean;
 };
 
@@ -31,8 +33,11 @@ export function TrackList({
   showAlbum = true,
   showCover = true,
   onRemove,
+  onMove,
   header = true,
 }: Props) {
+  const [dragFrom, setDragFrom] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
   const currentId = usePlayer((p) => p.current()?.id);
   const playing = usePlayer((p) => p.playing);
   const menu = useTrackMenu();
@@ -60,8 +65,33 @@ export function TrackList({
           <div
             key={`${t.id}-${i}`}
             role="listitem"
-            className={[cols, isCur && s.current].filter(Boolean).join(" ")}
+            className={[cols, isCur && s.current, dragOver === i && dragFrom !== i && s.dropTarget]
+              .filter(Boolean)
+              .join(" ")}
             onDoubleClick={() => onPlay(i)}
+            draggable={!!onMove}
+            onDragStart={onMove ? () => setDragFrom(i) : undefined}
+            onDragOver={
+              onMove
+                ? (e) => {
+                    e.preventDefault();
+                    setDragOver(i);
+                  }
+                : undefined
+            }
+            onDragEnd={() => {
+              setDragFrom(null);
+              setDragOver(null);
+            }}
+            onDrop={
+              onMove
+                ? () => {
+                    if (dragFrom !== null && dragFrom !== i) onMove(dragFrom, i);
+                    setDragFrom(null);
+                    setDragOver(null);
+                  }
+                : undefined
+            }
             onContextMenu={(e) => menu.open(e, t)}
           >
             <span className={s.num}>

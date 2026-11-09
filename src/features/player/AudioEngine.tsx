@@ -4,6 +4,9 @@ import { useUI } from "../../store/ui";
 import { playableUrl, prefetch } from "../../lib/stream";
 import { pickThumb } from "../../lib/format";
 import { artistNames } from "../../sources/types";
+import { getRepo } from "../../db";
+import { useQueryClient } from "@tanstack/react-query";
+import { libKeys } from "../library/usePlaylists";
 
 /**
  * Bridges the player store and a single hidden <audio> element.
@@ -20,6 +23,7 @@ export function AudioEngine() {
   const volume = usePlayer((s) => s.volume);
   const muted = usePlayer((s) => s.muted);
   const seekNonce = usePlayer((s) => s.seekNonce);
+  const qc = useQueryClient();
 
   // Load source when the current track changes.
   useEffect(() => {
@@ -37,12 +41,15 @@ export function AudioEngine() {
         const { seekRequest, playing: p } = usePlayer.getState();
         if (seekRequest) el.currentTime = seekRequest;
         if (p) void el.play().catch(() => undefined);
+        void getRepo()
+          .then((r) => r.pushHistory(current))
+          .then(() => qc.invalidateQueries({ queryKey: libKeys.history }));
       })
       .catch(() => fail(current.title));
     return () => {
       cancelled = true;
     };
-  }, [current]);
+  }, [current]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const el = ref.current;

@@ -11,7 +11,7 @@ import s from "./Collection.module.css";
 
 type Props = {
   kind: string;
-  title: string;
+  title: ReactNode;
   subtitle?: ReactNode;
   thumbs: Thumb[];
   tracks: Track[];
@@ -19,6 +19,7 @@ type Props = {
   actions?: ReactNode;
   showAlbum?: boolean;
   onRemove?(i: number): void;
+  onMove?(from: number, to: number): void;
   emptyText?: string;
   icon?: ReactNode;
 };
