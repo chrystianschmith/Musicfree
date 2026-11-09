@@ -8,6 +8,7 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig({
   plugins: [react()],
   clearScreen: false,
+  build: { chunkSizeWarningLimit: 800 },
   server: {
     port: 1420,
     strictPort: true,
@@ -16,9 +17,9 @@ export default defineConfig({
     watch: { ignored: ["**/src-tauri/**"] },
   },
   test: {
-    environment: "jsdom",
     globals: false,
     setupFiles: ["./src/test/setup.ts"],
-    include: ["src/**/*.test.{ts,tsx}"],
+    include: process.env.SMOKE ? ["smoke/**/*.test.ts"] : ["src/**/*.test.{ts,tsx}"],
+    environment: process.env.SMOKE ? "node" : "jsdom",
   },
 });

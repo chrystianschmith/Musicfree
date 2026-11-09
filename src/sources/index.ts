@@ -1,11 +1,20 @@
+import { isTauri } from "../lib/platform";
 import { MockMusicSource } from "./mock/MockMusicSource";
+import { YouTubeMusicSource } from "./youtube/YouTubeMusicSource";
 import type { MusicSource } from "./types";
 
 let instance: MusicSource | undefined;
 
-/** The active music source. Replaced by the YouTube source inside Tauri (see Task 10). */
+/**
+ * The active music source: YouTube Music inside the desktop app, mock data in the browser build.
+ * Override with VITE_SOURCE=mock|youtube.
+ */
 export function getSource(): MusicSource {
-  instance ??= new MockMusicSource();
+  if (!instance) {
+    const forced = import.meta.env.VITE_SOURCE as string | undefined;
+    const useYoutube = forced ? forced === "youtube" : isTauri();
+    instance = useYoutube ? new YouTubeMusicSource() : new MockMusicSource();
+  }
   return instance;
 }
 
