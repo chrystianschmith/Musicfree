@@ -108,7 +108,7 @@ pnpm tauri build    # build the installer for your OS
 | `pnpm screenshots`           | Regenerates the images in `docs/screenshots`       |
 | `cd src-tauri && cargo test` | Rust proxy tests                                   |
 
-Releases are automatic: push a tag such as `v0.2.0` and the `Release` workflow builds the Windows, macOS and Linux installers and publishes them.
+Releases are automatic: push a tag such as `v0.2.0` (or run the **Release** workflow manually from the Actions tab and type the version) and GitHub Actions builds the Windows, macOS and Linux installers and publishes them.
 
 ## Project layout
 
