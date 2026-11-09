@@ -4,6 +4,7 @@ import { PlayerBar } from "../features/player/PlayerBar";
 import { AudioEngine } from "../features/player/AudioEngine";
 import { RightPanel } from "../features/nowplaying/RightPanel";
 import { Toasts } from "../components/Toasts";
+import { ContextMenu } from "../components/ContextMenu";
 import { useUI } from "../store/ui";
 import s from "./Layout.module.css";
 
@@ -19,6 +20,7 @@ export function Layout() {
       <PlayerBar />
       <AudioEngine />
       <Toasts />
+      <ContextMenu />
     </div>
   );
 }
