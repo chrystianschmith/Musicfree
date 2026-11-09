@@ -1,0 +1,22 @@
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) var(--bar-h);
+  grid-template-areas:
+    "side main"
+    "bar bar";
+  position: relative;
+}
+.withPanel {
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr) var(--panel-w);
+  grid-template-areas:
+    "side main panel"
+    "bar bar bar";
+}
+.main {
+  grid-area: main;
+  overflow-y: auto;
+  padding: 22px 28px 40px;
+  position: relative;
+}

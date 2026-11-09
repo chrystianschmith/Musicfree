@@ -1,0 +1,81 @@
+.bar {
+  grid-area: bar;
+  height: var(--bar-h);
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(320px, 2fr) minmax(180px, 1fr);
+  align-items: center;
+  gap: 16px;
+  padding: 0 20px 6px;
+}
+.left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.coverBtn {
+  line-height: 0;
+}
+.meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.title {
+  font-size: 14px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.title:hover {
+  text-decoration: underline;
+}
+.artists {
+  font-size: 12px;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.artists a:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.play {
+  margin: 0 2px;
+}
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 620px;
+}
+.time {
+  font-size: 11px;
+  color: var(--text-2);
+  min-width: 36px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+.volume {
+  max-width: 96px;
+}
