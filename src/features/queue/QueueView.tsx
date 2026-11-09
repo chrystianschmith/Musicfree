@@ -1,10 +1,16 @@
-import { useShallow } from "zustand/react/shallow";
+import { useMemo } from "react";
 import { usePlayer } from "../../store/player";
 import { TrackList } from "../tracks/TrackList";
 
 export function QueueView() {
-  const { current, upcoming } = usePlayer(
-    useShallow((p) => ({ current: p.current(), upcoming: p.upcoming() })),
+  // Select raw state and derive locally: selectors that build new arrays re-render forever.
+  const queue = usePlayer((p) => p.queue);
+  const order = usePlayer((p) => p.order);
+  const index = usePlayer((p) => p.index);
+  const current = index >= 0 ? queue[order[index]] : undefined;
+  const upcoming = useMemo(
+    () => (index >= 0 ? order.slice(index + 1).map((i) => queue[i]) : []),
+    [queue, order, index],
   );
   const jump = usePlayer((p) => p.jumpToUpcoming);
   const remove = usePlayer((p) => p.removeUpcoming);
