@@ -25,7 +25,14 @@ serde_json = "1"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 tauri-plugin-log = "2"
 log = "0.4"
+tauri-plugin-http = "2"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "http2"] }
+tokio = { version = "1", features = ["sync", "time", "macros"] }
 
+
+[dev-dependencies]
+httpmock = "0.7"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]

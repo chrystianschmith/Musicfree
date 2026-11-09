@@ -9,6 +9,32 @@
     "core:default",
     "sql:default",
     "sql:allow-execute",
-    "log:default"
+    "log:default",
+    {
+      "identifier": "http:default",
+      "allow": [
+        {
+          "url": "https://*.youtube.com/*"
+        },
+        {
+          "url": "https://youtube.com/*"
+        },
+        {
+          "url": "https://*.googlevideo.com/*"
+        },
+        {
+          "url": "https://*.ytimg.com/*"
+        },
+        {
+          "url": "https://*.googleusercontent.com/*"
+        },
+        {
+          "url": "https://*.google.com/*"
+        },
+        {
+          "url": "https://lrclib.net/*"
+        }
+      ]
+    }
   ]
 }

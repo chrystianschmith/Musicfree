@@ -24,7 +24,7 @@ export function resolveCached(id: string, force = false): Promise<StreamInfo> {
  */
 export async function playableUrl(id: string, force = false): Promise<string> {
   const info = await resolveCached(id, force);
-  if (!isTauri()) return info.url;
+  if (!isTauri() || !info.url.startsWith("http")) return info.url;
   const { invoke, convertFileSrc } = await import("@tauri-apps/api/core");
   await invoke("stream_set_url", {
     videoId: id,
@@ -38,4 +38,18 @@ export async function playableUrl(id: string, force = false): Promise<string> {
 /** Warm the next track so switching is instant. Errors are ignored (retried on play). */
 export function prefetch(id: string | undefined) {
   if (id) void playableUrl(id).catch(() => undefined);
+}
+
+let bridged = false;
+
+/** In Tauri, answer the proxy's requests for fresh URLs (expired or rejected streams). */
+export async function initStreamBridge() {
+  if (bridged || !isTauri()) return;
+  bridged = true;
+  const { listen } = await import("@tauri-apps/api/event");
+  await listen<{ videoId: string }>("stream:need-url", (e) => {
+    void playableUrl(e.payload.videoId, true).catch((err) =>
+      console.error("re-resolve failed", err),
+    );
+  });
 }
