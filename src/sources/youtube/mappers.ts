@@ -214,3 +214,36 @@ export function mapPanelVideo(v: YtPanelVideo): Track | undefined {
 export const onlyTracks = (items: (ShelfItem | undefined)[]): Track[] =>
   items.flatMap((i) => (i?.kind === "track" ? [i.track] : []));
 export const defined = <T>(xs: (T | undefined)[]): T[] => xs.filter((x): x is T => x !== undefined);
+
+/**
+ * Groups mapped items by kind (deduplicated by id). Used for search results so we never depend
+ * on shelf titles, which YouTube localizes ("Songs" vs "Músicas").
+ */
+export function bucketItems(items: (ShelfItem | undefined)[]) {
+  const seen = new Set<string>();
+  const out = {
+    songs: [] as Track[],
+    albums: [] as Album[],
+    artists: [] as Artist[],
+    playlists: [] as Playlist[],
+  };
+  for (const i of items) {
+    if (!i) continue;
+    const id =
+      i.kind === "track"
+        ? i.track.id
+        : i.kind === "album"
+          ? i.album.id
+          : i.kind === "artist"
+            ? i.artist.id
+            : i.playlist.id;
+    const key = `${i.kind}:${id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (i.kind === "track") out.songs.push(i.track);
+    else if (i.kind === "album") out.albums.push(i.album);
+    else if (i.kind === "artist") out.artists.push(i.artist);
+    else out.playlists.push(i.playlist);
+  }
+  return out;
+}
