@@ -1,0 +1,154 @@
+.box {
+  position: relative;
+  flex: 1;
+  max-width: 460px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 8px;
+  padding-bottom: 6px;
+  box-shadow: inset 0 -1px 0 var(--track);
+  transition: box-shadow 0.15s;
+}
+.box:focus-within {
+  box-shadow: inset 0 -1.5px 0 var(--accent);
+}
+.icon {
+  color: var(--text-2);
+}
+.input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  user-select: text;
+}
+.input::placeholder {
+  color: var(--text-2);
+}
+.clear {
+  color: var(--icon);
+  line-height: 0;
+}
+.clear:hover {
+  color: var(--text);
+}
+.sugg {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  padding: 6px;
+  background: #1c1b21;
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+.suggItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: left;
+}
+.suggItem svg {
+  color: var(--icon);
+}
+.suggItem:hover {
+  background: #26252d;
+}
+.empty h1 {
+  font-size: 30px;
+  font-weight: 650;
+  margin: 10px 0 6px;
+}
+.empty p {
+  color: var(--text-2);
+  margin: 0 0 24px;
+}
+.recentList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.recentList button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0;
+  color: var(--text);
+  opacity: 0.85;
+}
+.recentList button:hover {
+  opacity: 1;
+}
+.recentList svg {
+  color: var(--text-2);
+}
+.tabs {
+  display: flex;
+  gap: 22px;
+  margin-bottom: 26px;
+}
+.tab {
+  color: var(--text-2);
+  padding-bottom: 6px;
+}
+.tab:hover {
+  color: var(--text);
+}
+.tabOn {
+  color: var(--text);
+  box-shadow: inset 0 -1.5px 0 var(--accent);
+}
+.h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 14px;
+}
+.topGrid {
+  display: grid;
+  grid-template-columns: minmax(240px, 2fr) minmax(0, 3fr);
+  gap: 32px;
+  margin-bottom: 34px;
+}
+.top {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.topCover {
+  line-height: 0;
+  margin-bottom: 16px;
+}
+.topTitle {
+  font-size: 28px;
+  font-weight: 650;
+  letter-spacing: -0.3px;
+}
+.topSub {
+  color: var(--text-2);
+  margin-bottom: 14px;
+}
+.topPlay {
+  color: var(--accent);
+  font-weight: 500;
+}
+.topPlay:hover {
+  color: var(--text);
+}
+.section {
+  margin-bottom: 34px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 22px;
+}
+.none {
+  color: var(--text-2);
+}

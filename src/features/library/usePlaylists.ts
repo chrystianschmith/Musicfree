@@ -18,3 +18,9 @@ export function useLibraryActions() {
     createPlaylistWith: (_t: Track) => void _t,
   };
 }
+export function useLikedIds(): Set<string> {
+  return new Set();
+}
+export function useRecentSearches() {
+  return { list: [] as string[], add: (_q: string) => void _q };
+}
