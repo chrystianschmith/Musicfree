@@ -14,7 +14,7 @@ jobs:
     name: Web (lint, unit, e2e)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -38,7 +38,7 @@ jobs:
     name: Rust (fmt, clippy, test)
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: System dependencies
         run: |
           sudo apt-get update
@@ -63,7 +63,7 @@ jobs:
     # YouTube sometimes blocks datacenter IPs; this job warns early about API changes but never blocks merges.
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
