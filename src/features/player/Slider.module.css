@@ -1,0 +1,40 @@
+.slider {
+  position: relative;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex: 1;
+  touch-action: none;
+}
+.track {
+  height: 3px;
+  width: 100%;
+  background: var(--track);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.fill {
+  height: 100%;
+  background: var(--text);
+  border-radius: 3px;
+}
+.slider:hover .fill,
+.dragging .fill {
+  background: var(--accent);
+}
+.thumb {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  margin-left: -5.5px;
+  border-radius: 50%;
+  background: var(--text);
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.slider:hover .thumb,
+.dragging .thumb,
+.slider:focus-visible .thumb {
+  opacity: 1;
+}

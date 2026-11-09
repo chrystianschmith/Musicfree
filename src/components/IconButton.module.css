@@ -1,0 +1,23 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--icon);
+  transition:
+    color 0.15s,
+    transform 0.1s;
+  line-height: 0;
+}
+.btn:hover {
+  color: var(--text);
+}
+.btn:active {
+  transform: scale(0.94);
+}
+.active,
+.active:hover {
+  color: var(--accent);
+}
+.strong {
+  color: var(--text);
+}

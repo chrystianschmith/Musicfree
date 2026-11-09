@@ -1,0 +1,12 @@
+.cover {
+  display: block;
+  flex: none;
+  object-fit: cover;
+  background: #1c1b21;
+}
+.empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+}

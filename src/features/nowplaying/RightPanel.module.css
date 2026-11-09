@@ -1,0 +1,31 @@
+.panel {
+  grid-area: panel;
+  padding: 22px 24px 16px 8px;
+  overflow-y: auto;
+  min-height: 0;
+}
+.coverBtn {
+  line-height: 0;
+  margin-bottom: 14px;
+  transition: transform 0.2s var(--ease-out);
+}
+.coverBtn:hover {
+  transform: translateY(-2px);
+}
+.title {
+  font-size: 17px;
+  font-weight: 600;
+}
+.artist {
+  color: var(--text-2);
+  margin-bottom: 22px;
+}
+.artist a:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+.empty {
+  color: var(--text-2);
+  font-size: 13px;
+  margin-top: 40px;
+}
