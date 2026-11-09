@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Route, Routes } from "react-router-dom";
 import { Layout } from "./app/Layout";
+import { HomePage } from "./features/home/HomePage";
+import { ExplorePage } from "./features/explore/ExplorePage";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 5 * 60_000, retry: 1, refetchOnWindowFocus: false } },
@@ -16,7 +18,8 @@ export default function App() {
       <HashRouter>
         <Routes>
           <Route element={<Layout />}>
-            <Route index element={<Placeholder title="Início" />} />
+            <Route index element={<HomePage />} />
+            <Route path="explore" element={<ExplorePage />} />
             <Route path="*" element={<Placeholder title="Em breve" />} />
           </Route>
         </Routes>
