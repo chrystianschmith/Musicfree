@@ -1,0 +1,17 @@
+:root {
+  --bg: #111114;
+  --bg-hover: #1a1a1f;
+  --accent: #9f97f0;
+  --text: #ecebf5;
+  --text-2: #7e7d8c;
+  --text-3: #55545f;
+  --track: #2c2b33;
+  --icon: #8e8d9c;
+
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --sidebar-w: 220px;
+  --panel-w: 300px;
+  --bar-h: 88px;
+  --radius-cover: 10px;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+}

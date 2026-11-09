@@ -21,17 +21,17 @@ Player de música para desktop, de uso pessoal e projeto de portfólio no GitHub
 
 ## 2. Stack
 
-| Camada | Escolha | Motivo |
-|---|---|---|
-| Shell desktop | **Tauri 2** (Rust) | Usa o webview nativo do sistema; instalador pequeno e pouca RAM |
-| UI | **React 19 + TypeScript + Vite** | Ecossistema maduro e build rápido |
-| Estilo | CSS Modules + variáveis CSS (tokens) | Controle fino do visual; sem dependência pesada |
-| Estado | Zustand (player, fila, UI) + TanStack Query (dados remotos com cache) | Simples e com cache automático |
-| YouTube Music | **YouTube.js (`youtubei.js`)**, MIT, mantido ativamente | Cliente InnerTube mais completo e atualizado |
-| HTTP | `tauri-plugin-http` | Requisições saem pelo Rust, sem bloqueio de CORS |
-| Banco local | SQLite via `tauri-plugin-sql` | Biblioteca, playlists, histórico e configurações |
-| Letras | LRCLIB (API pública, sem chave) | Letras sincronizadas (LRC) |
-| Controles de mídia do SO | crate `souvlaki` | Teclas de mídia, painel de mídia do Windows/macOS e MPRIS no Linux |
+| Camada                   | Escolha                                                               | Motivo                                                             |
+| ------------------------ | --------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Shell desktop            | **Tauri 2** (Rust)                                                    | Usa o webview nativo do sistema; instalador pequeno e pouca RAM    |
+| UI                       | **React 19 + TypeScript + Vite**                                      | Ecossistema maduro e build rápido                                  |
+| Estilo                   | CSS Modules + variáveis CSS (tokens)                                  | Controle fino do visual; sem dependência pesada                    |
+| Estado                   | Zustand (player, fila, UI) + TanStack Query (dados remotos com cache) | Simples e com cache automático                                     |
+| YouTube Music            | **YouTube.js (`youtubei.js`)**, MIT, mantido ativamente               | Cliente InnerTube mais completo e atualizado                       |
+| HTTP                     | `tauri-plugin-http`                                                   | Requisições saem pelo Rust, sem bloqueio de CORS                   |
+| Banco local              | SQLite via `tauri-plugin-sql`                                         | Biblioteca, playlists, histórico e configurações                   |
+| Letras                   | LRCLIB (API pública, sem chave)                                       | Letras sincronizadas (LRC)                                         |
+| Controles de mídia do SO | crate `souvlaki`                                                      | Teclas de mídia, painel de mídia do Windows/macOS e MPRIS no Linux |
 
 ## 3. Arquitetura
 
@@ -106,13 +106,13 @@ Player de música para desktop, de uso pessoal e projeto de portfólio no GitHub
 
 ## 6. Tratamento de erros
 
-| Situação | Comportamento |
-|---|---|
-| Falha ao resolver o stream ou 403 | Tenta resolver de novo uma vez. Se falhar, pula para a próxima e mostra o aviso "Não foi possível tocar X" |
+| Situação                                  | Comportamento                                                                                                                            |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Falha ao resolver o stream ou 403         | Tenta resolver de novo uma vez. Se falhar, pula para a próxima e mostra o aviso "Não foi possível tocar X"                               |
 | YouTube mudou a resposta (falha de parse) | O erro é capturado em `sources/`. A tela mostra "Esta seção não carregou" com o botão "Tentar de novo"; o resto do app segue funcionando |
-| Sem internet | Faixa discreta "Sem conexão". Biblioteca e playlists continuam navegáveis (os metadados estão em cache) |
-| Letra não encontrada | Mostra "Letra indisponível para esta música" |
-| Banco corrompido ou migração falhou | Faz backup do arquivo, recria o banco e avisa |
+| Sem internet                              | Faixa discreta "Sem conexão". Biblioteca e playlists continuam navegáveis (os metadados estão em cache)                                  |
+| Letra não encontrada                      | Mostra "Letra indisponível para esta música"                                                                                             |
+| Banco corrompido ou migração falhou       | Faz backup do arquivo, recria o banco e avisa                                                                                            |
 
 Todos os erros são registrados em um log local (`tauri-plugin-log`), que pode ser acessado em Configurações → "Abrir pasta de logs".
 

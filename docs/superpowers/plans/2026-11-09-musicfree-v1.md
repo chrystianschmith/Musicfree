@@ -50,6 +50,7 @@
 **Files:** Create `src/sources/types.ts`, `src/sources/mock/fixtures.ts`, `src/sources/mock/MockMusicSource.ts`, `src/sources/index.ts`; Test `src/sources/mock/MockMusicSource.test.ts`.
 
 **Interfaces — Produces:**
+
 ```ts
 type Thumb = { url: string; w: number; h: number }
 type ArtistRef = { id?: string; name: string }
@@ -73,6 +74,7 @@ interface MusicSource {
 }
 getSource(): MusicSource  // Mock no navegador ou se VITE_SOURCE=mock; YouTube no Tauri
 ```
+
 - [ ] Teste: `search('noite')` retorna `songs.length > 0`; `home()` retorna ≥3 shelves e moods incluindo `'Relax'`; `artist(id)` do fixture tem `topTracks` ≥5.
 - [ ] Implementar fixtures (≥8 artistas fictícios, ≥30 faixas, capas = data-URI SVG gerado por cor) e Mock com latência 150 ms.
 - [ ] `pnpm test` PASS; commit `feat: domain model and mock source`.
@@ -82,12 +84,14 @@ getSource(): MusicSource  // Mock no navegador ou se VITE_SOURCE=mock; YouTube n
 **Files:** Create `src/store/player.ts`; Test `src/store/player.test.ts`.
 
 **Interfaces — Produces:**
+
 ```ts
 type Repeat = 'off' | 'all' | 'one'
 usePlayer: { queue: Track[]; order: number[]; index: number; shuffle: boolean; repeat: Repeat; playing: boolean; volume: number; muted: boolean; position: number; duration: number;
   playTracks(tracks: Track[], start?: number): void; playNext(t: Track): void; addToQueue(t: Track): void; removeAt(orderPos: number): void; move(from: number, to: number): void;
   next(): void; prev(): void; toggle(): void; setShuffle(v: boolean): void; cycleRepeat(): void; seek(sec: number): void; setVolume(v: number): void; current(): Track | undefined; upcoming(): Track[] }
 ```
+
 - [ ] Testes: next/prev em fila vazia não lança; repeat `one` mantém índice no `next()` automático (`onEnded`); repeat `all` volta ao 0; prev com position>3 → seek(0); shuffle mantém atual em `order[index]` e desligar restaura ordem original; `playNext` insere logo após atual.
 - [ ] Implementar (store puro, sem DOM; `onEnded()` separado de `next()`).
 - [ ] PASS; commit `feat: player store`.
@@ -97,6 +101,7 @@ usePlayer: { queue: Track[]; order: number[]; index: number; shuffle: boolean; r
 **Files:** Create `src/app/App.tsx`, `src/app/Layout.tsx`, `src/app/Sidebar.tsx`, `src/app/Logo.tsx`, `src/features/player/PlayerBar.tsx`, `src/features/player/AudioEngine.tsx`, `src/features/player/ProgressBar.tsx`, `src/components/IconButton.tsx`, `src/components/Cover.tsx`, `src/lib/format.ts` (+ test).
 
 **Interfaces — Produces:** `IconButton({icon, label, active?, size?, onClick})`; `Cover({thumbs, size, radius?})` (escolhe thumb ≥ size, fallback ícone); `formatTime(sec): string` ("1:05", "—" se inválido); `streamUrl(id): string` (`mf-stream://localhost/{id}` no Tauri, URL de `resolveStream` no navegador); `AudioEngine` sincroniza `usePlayer` ↔ `<audio>` e Media Session API (metadados, play/pause/next/prev).
+
 - [ ] Teste `formatTime(65)`→`"1:05"`, `formatTime(NaN)`→`"—"`.
 - [ ] Layout 3 colunas (sidebar 220px, main flex, painel direito 280px recolhível) + player bar 88px, conforme mockup v3; logo SVG (ponto + haste curva).
 - [ ] Verificar visual: `pnpm dev` + screenshot Playwright `docs/screenshots/shell.png`.
@@ -105,6 +110,7 @@ usePlayer: { queue: Track[]; order: number[]; index: number; shuffle: boolean; r
 ### Task 5: Início e Explorar
 
 **Files:** Create `src/features/home/HomePage.tsx`, `src/features/home/QuickPicks.tsx`, `src/features/shelf/ShelfRow.tsx`, `src/features/shelf/ShelfItemView.tsx`, `src/features/explore/ExplorePage.tsx`.
+
 - [ ] Saudação por hora (`Bom dia` <12h, `Boa tarde` <18h, `Boa noite`), abas de mood com sublinhado, quick picks ícone+texto, shelves horizontais; clique em faixa = `playTracks(shelfTracks, i)`; álbum/playlist/artista navegam.
 - [ ] Estados: skeleton suave, erro "Esta seção não carregou" + "Tentar de novo".
 - [ ] Screenshot `docs/screenshots/home.png`; commit `feat: home and explore`.
@@ -114,12 +120,14 @@ usePlayer: { queue: Track[]; order: number[]; index: number; shuffle: boolean; r
 **Files:** Create `src/features/search/SearchPage.tsx`, `src/features/search/SearchBox.tsx`, `src/features/tracks/TrackList.tsx`.
 
 **Interfaces — Produces:** `TrackList({tracks, onPlay(i), showAlbum?, numbered?})` (linha: nº/▶ hover, capa, título, artista, álbum, duração, coração; botão direito → menu de contexto da Task 9).
+
 - [ ] Sugestões com debounce 200 ms; abas Tudo/Músicas/Álbuns/Artistas/Playlists; recentes (últimas 10) em `settings`.
 - [ ] Atalho Ctrl+K ou `/` foca busca. Screenshot `search.png`; commit `feat: search`.
 
 ### Task 7: Artista, álbum, playlist
 
 **Files:** Create `src/features/artist/ArtistPage.tsx`, `src/features/collection/CollectionPage.tsx` (álbum e playlist remota/local).
+
 - [ ] Cabeçalho (capa grande, título, meta), ações ícone: tocar, aleatório, salvar/curtir, iniciar rádio; artista: populares (5, "mostrar mais" → 10), álbuns, singles, relacionados.
 - [ ] Screenshots `artist.png`, `album.png`; commit `feat: artist and collection pages`.
 
@@ -128,6 +136,7 @@ usePlayer: { queue: Track[]; order: number[]; index: number; shuffle: boolean; r
 **Files:** Create `src/db/LibraryRepo.ts` (interface), `src/db/memoryRepo.ts`, `src/db/sqliteRepo.ts`, `src/db/migrations.ts`, `src/db/index.ts`, `src/features/library/*`; Test `src/db/memoryRepo.test.ts`; Modify `src-tauri/src/lib.rs` (plugin sql), `src-tauri/capabilities/default.json`.
 
 **Interfaces — Produces:**
+
 ```ts
 interface LibraryRepo {
   isLiked(id): Promise<boolean>; toggleLike(t: Track): Promise<boolean>; liked(): Promise<Track[]>
@@ -139,6 +148,7 @@ interface LibraryRepo {
 }
 useLibrary() // hooks TanStack Query com invalidação
 ```
+
 - [ ] Testes (memoryRepo, mesma suíte reutilizável p/ sqlite): toggleLike idempotente, ordem de playlist após move, histórico corta em 5.000.
 - [ ] SQLite com schema da spec §3; sidebar lista playlists reais; "Nova playlist" cria "Minha playlist nº N".
 - [ ] PASS; commit `feat: local library`.
@@ -148,6 +158,7 @@ useLibrary() // hooks TanStack Query com invalidação
 **Files:** Create `src/lib/lrc.ts` (+ test), `src/lib/lyrics.ts`, `src/features/nowplaying/NowPlaying.tsx`, `src/features/nowplaying/Lyrics.tsx`, `src/features/nowplaying/RightPanel.tsx`, `src/features/queue/QueueView.tsx`, `src/components/ContextMenu.tsx`, `src/app/shortcuts.ts`.
 
 **Interfaces — Produces:** `parseLrc(text): {t: number; line: string}[]` (ordenado, ignora metadados); `activeLine(lines, sec): number`; `fetchLyrics(t: Track): Promise<{synced?: Line[]; plain?: string} | null>` (LRCLIB `/api/get?track_name&artist_name&duration`, fallback `/api/search`, cache em settings/lyrics_cache).
+
 - [ ] Testes lrc (inclui Review Focus) e `activeLine`.
 - [ ] Overlay sobe 350 ms `cubic-bezier(.2,.8,.2,1)`, respeita `prefers-reduced-motion`; clicar verso → seek; abas Letra/A seguir/Relacionadas.
 - [ ] Atalhos: espaço, Ctrl+→/←, Ctrl+↑/↓, Ctrl+L, Ctrl+K, `/`, Esc fecha overlay. Retomada da fila (pausado) via settings `lastSession`.
@@ -158,6 +169,7 @@ useLibrary() // hooks TanStack Query com invalidação
 **Files:** Create `src/sources/youtube/client.ts`, `src/sources/youtube/mappers.ts`, `src/sources/youtube/YouTubeMusicSource.ts`; Test `src/sources/youtube/mappers.test.ts` com fixtures JSON reduzidas em `src/sources/youtube/__fixtures__/`.
 
 **Interfaces — Consumes:** `MusicSource` (Task 2). **Produces:** `createInnertube()` usando `Innertube.create({ fetch: tauriFetch, generate_session_locally: true, retrieve_player: true })` e evaluator JS embutido para deciphering.
+
 - [ ] Mapeadores youtubei.js → domínio; teste com faixa sem duração/miniatura (Review Focus) → `durationMs` undefined, `thumbs` [].
 - [ ] `resolveStream`: `music.getInfo(id)` → `chooseFormat({type:'audio', quality:'best', format:'mp4'})` → `decipher`; fallback `webm`; `expiresAt` do parâmetro `expire`.
 - [ ] Erros de parse viram `SourceError('parse')`; rede → `SourceError('network')`.
@@ -168,6 +180,7 @@ useLibrary() // hooks TanStack Query com invalidação
 **Files:** Create `src-tauri/src/stream.rs`; Modify `src-tauri/src/lib.rs`; Test inline `#[cfg(test)]` em `stream.rs`.
 
 **Interfaces — Produces:** protocolo assíncrono `mf-stream` (`register_asynchronous_uri_scheme_protocol`); comando `stream_set_url(video_id, url, expires_at)`; evento `stream:need-url {videoId}` emitido ao front quando não há URL válida (front responde com `stream_set_url`); `parse_range(h: &str) -> Option<(u64, Option<u64>)>`.
+
 - [ ] Testes: `parse_range("bytes=0-")`, `"bytes=100-199"`, inválido → None; proxy contra servidor mock (`httpmock`): 206 repassado com `Content-Range`; 403 → pede URL nova uma vez e repete; segunda 403 → 502.
 - [ ] Headers para googlevideo: `User-Agent` do cliente usado, `Range` repassado; streaming em chunks (sem bufferizar a faixa inteira).
 - [ ] `cargo test` PASS; commit `feat: rust stream proxy`.
@@ -175,6 +188,7 @@ useLibrary() // hooks TanStack Query com invalidação
 ### Task 12: E2E, CI/CD, README
 
 **Files:** Create `e2e/app.spec.ts`, `playwright.config.ts`, `.github/workflows/ci.yml`, `.github/workflows/release.yml`, `.github/dependabot.yml`, `README.md`, `CONTRIBUTING.md`, `src-tauri/icons/*` (gerados do logo via `tauri icon`).
+
 - [ ] E2E (build web + Mock): buscar "noite" → tocar 1º resultado → player mostra título → abrir Tocando agora → curtir → aparece em Curtidas → criar playlist. Gera capturas em `docs/screenshots/`.
 - [ ] `ci.yml`: pnpm install, lint, test, build, e2e, `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test` (ubuntu com deps webkit).
 - [ ] `release.yml`: on tag `v*`, matriz windows-latest / ubuntu-22.04 / macos-latest (`--target universal-apple-darwin`), `tauri-apps/tauri-action@v0`, `releaseDraft: false`, `prerelease: true` para `v0.*`.
