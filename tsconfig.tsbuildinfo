@@ -1,1 +1,1 @@
-{"root":["./src/App.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/lib/platform.test.ts","./src/lib/platform.ts","./src/test/setup.ts"],"version":"6.0.3"}
+{"root":["./src/App.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/lib/platform.test.ts","./src/lib/platform.ts","./src/sources/index.ts","./src/sources/types.ts","./src/sources/mock/MockMusicSource.test.ts","./src/sources/mock/MockMusicSource.ts","./src/sources/mock/fixtures.ts","./src/test/setup.ts"],"version":"6.0.3"}
