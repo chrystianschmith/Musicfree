@@ -4,6 +4,8 @@ import { Layout } from "./app/Layout";
 import { HomePage } from "./features/home/HomePage";
 import { ExplorePage } from "./features/explore/ExplorePage";
 import { SearchPage } from "./features/search/SearchPage";
+import { ArtistPage } from "./features/artist/ArtistPage";
+import { AlbumRoute, PlaylistRoute } from "./features/collection/routes";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 5 * 60_000, retry: 1, refetchOnWindowFocus: false } },
@@ -22,6 +24,9 @@ export default function App() {
             <Route index element={<HomePage />} />
             <Route path="explore" element={<ExplorePage />} />
             <Route path="search" element={<SearchPage />} />
+            <Route path="artist/:id" element={<ArtistPage />} />
+            <Route path="album/:id" element={<AlbumRoute />} />
+            <Route path="playlist/:id" element={<PlaylistRoute />} />
             <Route path="*" element={<Placeholder title="Em breve" />} />
           </Route>
         </Routes>

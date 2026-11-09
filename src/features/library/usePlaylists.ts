@@ -24,3 +24,11 @@ export function useLikedIds(): Set<string> {
 export function useRecentSearches() {
   return { list: [] as string[], add: (_q: string) => void _q };
 }
+export function useSavedAlbum(_a: unknown) {
+  void _a;
+  return { saved: false, toggle: () => undefined };
+}
+export function useSavedArtist(_a: unknown) {
+  void _a;
+  return { saved: false, toggle: () => undefined };
+}
