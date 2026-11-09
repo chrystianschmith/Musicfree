@@ -14,9 +14,9 @@ export default defineConfig({
         watch: { ignored: ["**/src-tauri/**"] },
     },
     test: {
-        environment: "jsdom",
         globals: false,
         setupFiles: ["./src/test/setup.ts"],
-        include: ["src/**/*.test.{ts,tsx}"],
+        include: process.env.SMOKE ? ["smoke/**/*.test.ts"] : ["src/**/*.test.{ts,tsx}"],
+        environment: process.env.SMOKE ? "node" : "jsdom",
     },
 });

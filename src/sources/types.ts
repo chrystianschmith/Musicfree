@@ -60,7 +60,8 @@ export type SearchResult = {
   playlists: Playlist[];
 };
 
-export type StreamInfo = { url: string; mime: string; expiresAt: number };
+/** `userAgent` is the client UA the URL was issued for; the Rust proxy replays it. */
+export type StreamInfo = { url: string; mime: string; expiresAt: number; userAgent?: string };
 
 export type HomeFeed = { moods: string[]; shelves: Shelf[] };
 

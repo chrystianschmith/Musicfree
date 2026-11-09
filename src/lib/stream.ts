@@ -26,7 +26,12 @@ export async function playableUrl(id: string, force = false): Promise<string> {
   const info = await resolveCached(id, force);
   if (!isTauri()) return info.url;
   const { invoke, convertFileSrc } = await import("@tauri-apps/api/core");
-  await invoke("stream_set_url", { videoId: id, url: info.url, expiresAt: info.expiresAt });
+  await invoke("stream_set_url", {
+    videoId: id,
+    url: info.url,
+    expiresAt: info.expiresAt,
+    userAgent: info.userAgent ?? null,
+  });
   return convertFileSrc(id, "mf-stream");
 }
 
