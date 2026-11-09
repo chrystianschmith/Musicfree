@@ -16,6 +16,7 @@ import {
 } from "../types";
 import { httpFetch } from "../../lib/http";
 import {
+  bucketItems,
   defined,
   mapListItem,
   mapPanelVideo,
@@ -32,11 +33,20 @@ import {
 type Node = { type: string } & Record<string, any>;
 
 /** Clients tried in order when resolving a playable audio stream. */
-const STREAM_CLIENTS = ["ANDROID_VR", "TV", "WEB_EMBEDDED", "YTMUSIC"] as const;
+const STREAM_CLIENTS = [
+  "ANDROID_VR",
+  "TV",
+  "IOS",
+  "TV_SIMPLY",
+  "WEB_EMBEDDED",
+  "MWEB",
+  "YTMUSIC",
+] as const;
 const CLIENT_UA: Record<string, string> = {
   ANDROID_VR:
     "com.google.android.apps.youtube.vr.oculus/1.65.10 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip",
   TV: "Mozilla/5.0 (ChromiumStylePlatform) Cobalt/Version",
+  IOS: "com.google.ios.youtube/20.11.6 (iPhone10,4; U; CPU iOS 16_7_7 like Mac OS X)",
 };
 const DESKTOP_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
@@ -136,25 +146,10 @@ export class YouTubeMusicSource implements MusicSource {
       } as const;
       const res = await yt.music.search(q, { type: typeMap[filter] });
       const shelfItems = (s: unknown) => listItems((s as Node | undefined)?.contents);
-      let songs: Track[];
-      let albums: Album[];
-      let artists: Artist[];
-      let playlists: Playlist[];
-      if (filter === "all") {
-        songs = onlyTracks(shelfItems(res.songs));
-        if (!songs.length) songs = onlyTracks(shelfItems(res.videos));
-        albums = shelfItems(res.albums).flatMap((i) => (i.kind === "album" ? [i.album] : []));
-        artists = shelfItems(res.artists).flatMap((i) => (i.kind === "artist" ? [i.artist] : []));
-        playlists = shelfItems(res.playlists).flatMap((i) =>
-          i.kind === "playlist" ? [i.playlist] : [],
-        );
-      } else {
-        const all = (res.contents ?? []).flatMap((s) => shelfItems(s));
-        songs = onlyTracks(all);
-        albums = all.flatMap((i) => (i.kind === "album" ? [i.album] : []));
-        artists = all.flatMap((i) => (i.kind === "artist" ? [i.artist] : []));
-        playlists = all.flatMap((i) => (i.kind === "playlist" ? [i.playlist] : []));
-      }
+      // Classify by item type, never by shelf title (titles are localized).
+      const { songs, albums, artists, playlists } = bucketItems(
+        (res.contents ?? []).flatMap((s) => shelfItems(s)),
+      );
       const card = (res.contents ?? []).find((s) => isType(s, "MusicCardShelf")) as
         Node | undefined;
       let top: ShelfItem | undefined;

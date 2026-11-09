@@ -172,3 +172,19 @@ describe("mapPanelVideo", () => {
     ).toEqual([{ name: "Uploader" }]);
   });
 });
+
+describe("bucketItems", () => {
+  it("splits mapped items by kind, keeping first occurrence of duplicated ids", async () => {
+    const { bucketItems } = await import("./mappers");
+    const song = mapListItem({ item_type: "song", id: "s1", title: "S" });
+    const dup = mapListItem({ item_type: "song", id: "s1", title: "S (dup)" });
+    const alb = mapListItem({ item_type: "album", id: "MPRE1", title: "A" });
+    const art = mapListItem({ item_type: "artist", id: "UC1", name: "Ar" });
+    const pl = mapListItem({ item_type: "playlist", id: "VL1", title: "P" });
+    const b = bucketItems([song, alb, dup, art, pl, undefined]);
+    expect(b.songs.map((t) => t.title)).toEqual(["S"]);
+    expect(b.albums.map((a) => a.id)).toEqual(["MPRE1"]);
+    expect(b.artists.map((a) => a.id)).toEqual(["UC1"]);
+    expect(b.playlists.map((p) => p.id)).toEqual(["VL1"]);
+  });
+});
