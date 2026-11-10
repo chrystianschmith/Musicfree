@@ -1,10 +1,31 @@
 .shelf {
   margin-bottom: 34px;
 }
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
 .heading {
   font-size: 20px;
   font-weight: 600;
-  margin: 0 0 14px;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+.arrows {
+  display: flex;
+  gap: 10px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.shelf:hover .arrows,
+.arrows:focus-within {
+  opacity: 1;
+}
+.dim {
+  opacity: 0.25;
+  pointer-events: none;
 }
 .row {
   display: flex;
@@ -12,8 +33,29 @@
   overflow-x: auto;
   padding-bottom: 6px;
   scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  --fade-l: 0px;
+  --fade-r: 0px;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--fade-l),
+    #000 calc(100% - var(--fade-r)),
+    transparent 100%
+  );
+}
+.row::-webkit-scrollbar {
+  display: none;
+}
+.fadeStart {
+  --fade-l: 48px;
+}
+.fadeEnd {
+  --fade-r: 48px;
 }
 .item {
+  animation: mf-rise 0.5s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 35ms);
   flex: none;
   scroll-snap-align: start;
   min-width: 0;
@@ -22,10 +64,10 @@
   position: relative;
   line-height: 0;
   margin-bottom: 10px;
-  transition: transform 0.2s var(--ease-out);
+  transition: transform 0.3s var(--ease-out);
 }
 .item:hover .coverWrap {
-  transform: translateY(-2px);
+  transform: translateY(-4px) scale(1.015);
 }
 .play {
   position: absolute;

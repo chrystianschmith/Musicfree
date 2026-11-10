@@ -10,7 +10,10 @@
 
 ## Funções
 
-- **Início com recomendações**: filtros por clima, mixes, lançamentos e artistas do YouTube Music
+- **Recomendações conforme o que você escuta**: mix do dia, "Porque você ouviu…", "Voltar a ouvir" e seus artistas mais tocados, a partir de um perfil de escuta que fica só no seu computador (ouvir até o fim conta a favor, pular logo conta contra)
+- **Fila infinita**: quando a fila acaba, músicas parecidas continuam tocando
+- **Início**: filtros por clima, mixes, lançamentos e artistas do YouTube Music
+- **Design fluido e ambiente**: o app inteiro ganha o tom da capa atual, com transições suaves e barra lateral recolhível
 - **Busca** com sugestões enquanto você digita e abas para músicas, álbuns, artistas e playlists
 - **Páginas de artista, álbum e playlist** com tocar, aleatório e iniciar rádio
 - **Tocando agora** dentro do app: capa grande, **letra sincronizada** (clique num verso para pular até ele), fila e músicas relacionadas

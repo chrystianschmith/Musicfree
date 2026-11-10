@@ -68,3 +68,26 @@ a {
     opacity: 0.55;
   }
 }
+
+/* Ambient colour taken from the current cover; registered so it can be transitioned. */
+@property --ambient {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #1b1a22;
+}
+:root {
+  --ambient: #1b1a22;
+  transition: --ambient 1.4s ease;
+}
+@keyframes mf-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+@keyframes mf-page {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}

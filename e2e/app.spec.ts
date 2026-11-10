@@ -93,3 +93,57 @@ test("history records a track once per play, not on app start", async ({ page })
   await page.getByRole("link", { name: "Histórico" }).click();
   await expect(page.getByRole("listitem").filter({ hasText: "Madrugada" })).toHaveCount(1);
 });
+
+const seekTo = async (page: import("@playwright/test").Page, fraction: number) => {
+  const bb = (await page.getByRole("slider", { name: "Progresso" }).boundingBox())!;
+  await page.mouse.click(bb.x + bb.width * fraction, bb.y + bb.height / 2);
+};
+
+test("endless queue: similar tracks are added when the last track starts", async ({ page }) => {
+  await page.goto("/#/album/al-neon");
+  await page.getByRole("listitem").filter({ hasText: "Último trem" }).dblclick();
+  await page.locator("footer").getByRole("button", { name: "Fila" }).click();
+  const np = page.locator('section[aria-label="Tocando agora"]');
+  await expect.poll(() => np.getByRole("listitem").count()).toBeGreaterThan(5);
+  await expect(np).not.toContainText("Nada na fila");
+});
+
+test("home recommends from what was listened to, ignoring quick skips", async ({ page }) => {
+  await page.goto("/#/");
+  await expect(page.getByRole("heading", { name: "Feito para você" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Voltar a ouvir" })).toHaveCount(0);
+
+  await page.goto("/#/album/al-neon");
+  const bar = page.locator("footer");
+  for (const title of ["Luzes da cidade", "Horizonte"]) {
+    await page.getByRole("listitem").filter({ hasText: title }).first().dblclick();
+    await expect(bar).toContainText(title);
+    await page.waitForTimeout(700);
+    await seekTo(page, 0.9);
+    await page.waitForTimeout(700);
+  }
+  // Skipped right away: must not show up as something to replay.
+  await page.getByRole("listitem").filter({ hasText: "Madrugada" }).first().dblclick();
+  await page.waitForTimeout(700);
+  await page.getByRole("listitem").filter({ hasText: "Avenida" }).first().dblclick();
+  await page.waitForTimeout(500);
+
+  await page.getByRole("link", { name: "Início" }).click();
+  await expect(page.getByRole("heading", { name: "Seu mix de hoje" })).toBeVisible();
+  const replay = page
+    .locator("section")
+    .filter({ has: page.getByRole("heading", { name: "Voltar a ouvir" }) });
+  await expect(replay).toContainText("Luzes da cidade");
+  await expect(replay).toContainText("Horizonte");
+  await expect(replay).not.toContainText("Madrugada");
+  await expect(page.getByRole("heading", { name: /^Porque você ouviu/ })).toBeVisible();
+});
+
+test("sidebar collapses to icons and remembers it", async ({ page }) => {
+  await page.getByRole("button", { name: "Recolher barra lateral" }).click();
+  await expect(page.getByRole("button", { name: "Expandir barra lateral" })).toBeVisible();
+  const w = (await page.getByRole("navigation").boundingBox())!.width;
+  expect(w).toBeLessThan(100);
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Expandir barra lateral" })).toBeVisible();
+});

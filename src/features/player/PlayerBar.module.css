@@ -1,5 +1,7 @@
 .bar {
   grid-area: bar;
+  position: relative;
+  z-index: 40;
   height: var(--bar-h);
   display: grid;
   grid-template-columns: minmax(180px, 1fr) minmax(320px, 2fr) minmax(180px, 1fr);

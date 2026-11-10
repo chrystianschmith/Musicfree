@@ -5,6 +5,8 @@ export type NowPlayingTab = "lyrics" | "queue" | "related";
 
 type UI = {
   panelOpen: boolean;
+  sidebarCollapsed: boolean;
+  toggleSidebar(): void;
   nowPlayingOpen: boolean;
   nowPlayingTab: NowPlayingTab;
   toasts: Toast[];
@@ -16,8 +18,29 @@ type UI = {
 
 let seq = 0;
 
+function readFlag(key: string): boolean {
+  try {
+    return localStorage.getItem(key) === "1";
+  } catch {
+    return false;
+  }
+}
+function writeFlag(key: string, v: boolean) {
+  try {
+    localStorage.setItem(key, v ? "1" : "0");
+  } catch {
+    /* storage unavailable */
+  }
+}
+
 export const useUI = create<UI>()((set, get) => ({
   panelOpen: true,
+  sidebarCollapsed: readFlag("mf-sidebar-collapsed"),
+  toggleSidebar: () => {
+    const v = !get().sidebarCollapsed;
+    writeFlag("mf-sidebar-collapsed", v);
+    set({ sidebarCollapsed: v });
+  },
   nowPlayingOpen: false,
   nowPlayingTab: "lyrics",
   toasts: [],
