@@ -30,3 +30,18 @@ export const httpFetch: FetchFn = async (input, init) => {
   }
   return fetch(input, init);
 };
+
+/** Range request for media through the app's HTTP client, with only the headers given (no Origin). */
+export async function fetchRange(
+  url: string,
+  userAgent: string,
+  start: number,
+  end: number,
+): Promise<Response> {
+  const headers = { Range: `bytes=${start}-${end}`, "User-Agent": userAgent, Origin: "" };
+  if (isTauri()) {
+    const { fetch } = await import("@tauri-apps/plugin-http");
+    return fetch(url, { headers });
+  }
+  return fetch(url, { headers: { Range: headers.Range } });
+}

@@ -61,7 +61,14 @@ export type SearchResult = {
 };
 
 /** `userAgent` is the client UA the URL was issued for; the Rust proxy replays it. */
-export type StreamInfo = { url: string; mime: string; expiresAt: number; userAgent?: string };
+export type StreamInfo = {
+  url: string;
+  mime: string;
+  expiresAt: number;
+  userAgent?: string;
+  /** The Rust proxy can't reach this URL but the app's HTTP client can: download it instead. */
+  viaFetch?: boolean;
+};
 
 export type HomeFeed = { moods: string[]; shelves: Shelf[] };
 

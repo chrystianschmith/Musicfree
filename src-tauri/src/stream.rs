@@ -145,6 +145,8 @@ pub struct Clients {
     any: reqwest::Client,
     v4: reqwest::Client,
     v6: reqwest::Client,
+    /// Route that last worked (0 = unpinned, 1 = IPv4, 2 = IPv6).
+    preferred: std::sync::atomic::AtomicU8,
 }
 
 impl Clients {
@@ -159,15 +161,31 @@ impl Clients {
             .local_address(std::net::IpAddr::V6(std::net::Ipv6Addr::UNSPECIFIED))
             .build()
             .unwrap_or_else(|_| any.clone());
-        Self { any, v4, v6 }
+        Self {
+            any,
+            v4,
+            v6,
+            preferred: std::sync::atomic::AtomicU8::new(0),
+        }
     }
 
-    fn for_url(&self, url: &str) -> &reqwest::Client {
-        match ip_family(url) {
-            Some(Family::V4) => &self.v4,
-            Some(Family::V6) => &self.v6,
-            None => &self.any,
-        }
+    /// Routes to try for `url`, best guess first: the remembered working one, then the family
+    /// the URL was issued for, then the rest.
+    fn routes(&self, url: &str) -> Vec<(u8, &reqwest::Client)> {
+        let all = [(0u8, &self.any), (1, &self.v4), (2, &self.v6)];
+        let mut order = vec![self.preferred.load(std::sync::atomic::Ordering::Relaxed)];
+        order.push(match ip_family(url) {
+            Some(Family::V4) => 1,
+            Some(Family::V6) => 2,
+            None => 0,
+        });
+        order.extend([0, 1, 2]);
+        let mut seen = [false; 3];
+        order
+            .into_iter()
+            .filter(|r| !std::mem::replace(&mut seen[*r as usize], true))
+            .map(|r| all[r as usize])
+            .collect()
     }
 }
 
@@ -193,15 +211,37 @@ pub async fn probe(clients: &Clients, url: &str, user_agent: Option<&str>) -> u1
     }
 }
 
-async fn fetch(clients: &Clients, e: &Entry, range: (u64, u64)) -> Result<Upstream, String> {
-    let res = clients
-        .for_url(&e.url)
+/// Error text including the whole cause chain (reqwest hides the cause in `Display`).
+fn error_chain(err: &dyn std::error::Error) -> String {
+    let mut out = err.to_string();
+    let mut cur = err.source();
+    while let Some(e) = cur {
+        out.push_str(" <- ");
+        out.push_str(&e.to_string());
+        cur = e.source();
+    }
+    // Never log full stream URLs.
+    match out.find("?expire=") {
+        Some(i) => {
+            let end = out[i..].find(')').map_or(out.len(), |j| i + j);
+            format!("{}?…{}", &out[..i], &out[end..])
+        }
+        None => out,
+    }
+}
+
+async fn fetch_via(
+    client: &reqwest::Client,
+    e: &Entry,
+    range: (u64, u64),
+) -> Result<Upstream, String> {
+    let res = client
         .get(&e.url)
         .header("Range", format!("bytes={}-{}", range.0, range.1))
         .header("User-Agent", e.user_agent.as_deref().unwrap_or(DEFAULT_UA))
         .send()
         .await
-        .map_err(|err| err.to_string())?;
+        .map_err(|err| error_chain(&err))?;
     let status = res.status().as_u16();
     let headers = res
         .headers()
@@ -209,12 +249,35 @@ async fn fetch(clients: &Clients, e: &Entry, range: (u64, u64)) -> Result<Upstre
         .filter(|(k, _)| FORWARD_HEADERS.contains(&k.as_str()))
         .filter_map(|(k, v)| Some((k.to_string(), v.to_str().ok()?.to_string())))
         .collect();
-    let body = res.bytes().await.map_err(|err| err.to_string())?.to_vec();
+    let body = res.bytes().await.map_err(|err| error_chain(&err))?.to_vec();
     Ok(Upstream {
         status,
         headers,
         body,
     })
+}
+
+/// Fetches a range trying each network route until one is served; remembers the one that worked.
+async fn fetch(clients: &Clients, e: &Entry, range: (u64, u64)) -> Result<Upstream, String> {
+    let mut last: Result<Upstream, String> = Err("no route".into());
+    for (route, client) in clients.routes(&e.url) {
+        let res = fetch_via(client, e, range).await;
+        match &res {
+            Ok(up) if !rejected(up.status) => {
+                clients
+                    .preferred
+                    .store(route, std::sync::atomic::Ordering::Relaxed);
+                return res;
+            }
+            Ok(up) => log::warn!("route {route}: HTTP {}", up.status),
+            Err(err) => log::warn!("route {route}: {err}"),
+        }
+        // Prefer reporting an HTTP answer over a connection error.
+        if res.is_ok() || last.is_err() {
+            last = res;
+        }
+    }
+    last
 }
 
 fn rejected(status: u16) -> bool {
