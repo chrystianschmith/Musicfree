@@ -72,7 +72,7 @@ flowchart LR
 ```
 
 - **`MusicSource`** is the only door to YouTube Music. Nothing from `youtubei.js` leaks outside `src/sources/youtube/`, so when YouTube changes something, the fix lives in one folder. A mock source with fictional data powers development, tests and these screenshots.
-- **Stream proxy (Rust)**: the `<audio>` element loads `mf-stream://<videoId>`. The proxy forwards `Range` requests in 2 MiB chunks with the right client headers, and when a URL expires or is rejected it asks the front end for a fresh one **once** before skipping the track.
+- **Stream proxy (Rust)**: the `<audio>` element loads `mf-stream://<videoId>`. The proxy forwards `Range` requests in small chunks (shrinking them when the server rejects the size) with the right client headers, and when a URL expires or is rejected it asks the front end for a fresh one **once** before skipping the track.
 - **Library** lives in SQLite (`tauri-plugin-sql`). The same contract test suite runs against the SQLite repo (via sql.js) and the in-memory repo.
 - **Lyrics** come from [LRCLIB](https://lrclib.net) (free, no key) and are cached locally.
 
