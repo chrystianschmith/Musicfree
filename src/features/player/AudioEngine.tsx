@@ -3,7 +3,7 @@ import { usePlayer } from "../../store/player";
 import { useUI } from "../../store/ui";
 import { playableUrl, prefetch } from "../../lib/stream";
 import { pickThumb } from "../../lib/format";
-import { artistNames } from "../../sources/types";
+import { artistNames, SourceError } from "../../sources/types";
 import { getRepo } from "../../db";
 import { useQueryClient } from "@tanstack/react-query";
 import { libKeys } from "../library/usePlaylists";
@@ -45,7 +45,7 @@ export function AudioEngine() {
         if (seekRequest) el.currentTime = seekRequest;
         if (p) void el.play().catch(() => undefined);
       })
-      .catch(() => fail(current.title));
+      .catch((err) => fail(current.title, err));
     return () => {
       cancelled = true;
     };
@@ -105,8 +105,16 @@ export function AudioEngine() {
       navigator.mediaSession.playbackState = playing ? "playing" : "paused";
   }, [playing]);
 
-  function fail(title: string) {
-    useUI.getState().toast(`Não foi possível tocar ${title}`);
+  function fail(title: string, err?: unknown) {
+    console.error(`[player] could not play "${title}"`, err);
+    const kind = err instanceof SourceError ? err.kind : undefined;
+    const why =
+      kind === "unplayable"
+        ? " (o YouTube recusou o áudio)"
+        : kind === "network"
+          ? " (sem conexão com o YouTube)"
+          : "";
+    useUI.getState().toast(`Não foi possível tocar ${title}${why}`);
     loadedId.current = undefined;
     usePlayer.getState().next();
   }
@@ -154,8 +162,8 @@ export function AudioEngine() {
               el.currentTime = at;
               if (usePlayer.getState().playing) void el.play().catch(() => undefined);
             })
-            .catch(() => fail(cur.title));
-        } else fail(cur.title);
+            .catch((err) => fail(cur.title, err));
+        } else fail(cur.title, e.currentTarget.error);
       }}
     />
   );

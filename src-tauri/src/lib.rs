@@ -87,6 +87,7 @@ pub fn run() {
                 let Some(id) = id else {
                     return responder.respond(error_response(400));
                 };
+                log::info!("stream {id}: request range {range:?}");
                 let state = app.state::<Streams>();
                 let ask = |vid: &str| {
                     let _ = app.emit("stream:need-url", serde_json::json!({ "videoId": vid }));
@@ -110,7 +111,10 @@ pub fn run() {
                         }
                         b.body(up.body).unwrap_or_else(|_| error_response(502))
                     }
-                    Err(status) => error_response(status),
+                    Err(status) => {
+                        log::error!("stream {id}: failed with {status}");
+                        error_response(status)
+                    }
                 };
                 responder.respond(response);
             });
