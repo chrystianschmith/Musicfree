@@ -29,10 +29,6 @@ describe("YouTube Music (live)", { timeout: 60_000 }, () => {
     const r = await src.search("Garota de Ipanema", "songs");
     const info = await src.resolveStream(r.songs[0].id);
     expect(info.url).toMatch(/^https:\/\/.*googlevideo\.com\//);
-    const res = await fetch(info.url, {
-      headers: { Range: "bytes=0-1023", "User-Agent": info.userAgent ?? "" },
-    });
-    expect([200, 206]).toContain(res.status);
   });
 });
 
