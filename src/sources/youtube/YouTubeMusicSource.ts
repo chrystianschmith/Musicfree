@@ -14,7 +14,8 @@ import {
   type Thumb,
   type Track,
 } from "../types";
-import { httpFetch } from "../../lib/http";
+import { BROWSER_UA, httpFetch } from "../../lib/http";
+import { isTauri } from "../../lib/platform";
 import {
   bucketItems,
   defined,
@@ -35,21 +36,17 @@ type Node = { type: string } & Record<string, any>;
 /** Clients tried in order when resolving a playable audio stream. */
 const STREAM_CLIENTS = [
   "ANDROID_VR",
+  "ANDROID",
   "IOS",
+  "VISIONOS",
   "TV",
+  "TV_EMBEDDED",
   "YTMUSIC",
   "TV_SIMPLY",
   "WEB_EMBEDDED",
   "MWEB",
+  "WEB",
 ] as const;
-const CLIENT_UA: Record<string, string> = {
-  ANDROID_VR:
-    "com.google.android.apps.youtube.vr.oculus/1.65.10 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip",
-  TV: "Mozilla/5.0 (ChromiumStylePlatform) Cobalt/Version",
-  IOS: "com.google.ios.youtube/20.11.6 (iPhone10,4; U; CPU iOS 16_7_7 like Mac OS X)",
-};
-const DESKTOP_UA =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
 
 let yt: Promise<Innertube> | undefined;
 
@@ -297,7 +294,11 @@ export class YouTubeMusicSource implements MusicSource {
 
   radio(videoId: string): Promise<Track[]> {
     return guard(async (yt) => {
-      const panel = await yt.music.getUpNext(videoId, true);
+      // The automix request fails inside the library for some non-music videos; fall back to
+      // the plain up-next list.
+      const panel = await yt.music
+        .getUpNext(videoId, true)
+        .catch(() => yt.music.getUpNext(videoId, false));
       const tracks = defined(
         ((panel.contents ?? []) as unknown as Node[])
           .map((n) => unwrapPanel(n))
@@ -329,12 +330,17 @@ export class YouTubeMusicSource implements MusicSource {
 
   resolveStream(videoId: string): Promise<StreamInfo> {
     return guard(async (yt) => {
-      const errors: string[] = [];
+      const { Constants } = await import("youtubei.js");
+      const uaOf = (client: string) =>
+        (Constants.CLIENTS as Record<string, { USER_AGENT?: string }>)[client]?.USER_AGENT ??
+        BROWSER_UA;
+      const report: string[] = [];
       for (const client of STREAM_CLIENTS) {
         try {
           const info = await yt.getBasicInfo(videoId, { client });
-          if (info.playability_status?.status && info.playability_status.status !== "OK") {
-            errors.push(`${client}: ${info.playability_status.status}`);
+          const status = info.playability_status?.status;
+          if (status && status !== "OK") {
+            report.push(`${client}: ${status}`);
             continue;
           }
           let format;
@@ -345,21 +351,55 @@ export class YouTubeMusicSource implements MusicSource {
           }
           const url = await format.decipher(yt.session.player);
           if (!url) throw new Error("empty url");
+          const userAgent = uaOf(client);
+          // A URL is only good if the media server really serves it: some clients hand out
+          // URLs that answer 403 (missing PoToken, IP family mismatch…).
+          const http = await probeStream(url, userAgent);
+          report.push(`${client}: ${describeUrl(url)} → HTTP ${http}`);
+          if (http !== 200 && http !== 206) continue;
+          console.warn(`[stream] ${videoId} ok — ${report.join("; ")}`);
           const expire = Number(new URL(url).searchParams.get("expire"));
           return {
             url,
             mime: format.mime_type?.split(";")[0] ?? "audio/mp4",
             expiresAt: expire ? expire * 1000 : Date.now() + 5 * 3600_000,
-            userAgent: CLIENT_UA[client] ?? DESKTOP_UA,
+            userAgent,
           };
         } catch (e) {
-          errors.push(`${client}: ${e instanceof Error ? e.message : String(e)}`);
+          report.push(`${client}: ${e instanceof Error ? e.message : String(e)}`);
         }
       }
       throw new SourceError(
         "unplayable",
-        `no playable stream for ${videoId} (${errors.join("; ")})`,
+        `no playable stream for ${videoId} (${report.join("; ")})`,
       );
     });
+  }
+}
+
+/** Non-sensitive facts about a stream URL, for the log. */
+function describeUrl(url: string): string {
+  const q = new URL(url).searchParams;
+  const ip = q.get("ip") ?? "";
+  return [
+    `itag ${q.get("itag")}`,
+    `c=${q.get("c")}`,
+    ip.includes(":") ? "ipv6" : ip ? "ipv4" : "no-ip",
+    q.has("pot") ? "pot" : "no-pot",
+    q.has("n") ? "n" : "no-n",
+  ].join(" ");
+}
+
+/** HTTP status of the first bytes of a stream URL, fetched the same way playback will. */
+async function probeStream(url: string, userAgent: string): Promise<number> {
+  if (isTauri()) {
+    const { invoke } = await import("@tauri-apps/api/core");
+    return invoke<number>("stream_probe", { url, userAgent });
+  }
+  try {
+    const res = await fetch(url, { headers: { Range: "bytes=0-1023", "User-Agent": userAgent } });
+    return res.status;
+  } catch {
+    return 0;
   }
 }

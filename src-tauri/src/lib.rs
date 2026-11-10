@@ -10,7 +10,7 @@ use stream::{Entry, StreamStore};
 
 struct Streams {
     store: Arc<StreamStore>,
-    client: reqwest::Client,
+    clients: stream::Clients,
 }
 
 /// Called by the front end with a freshly resolved googlevideo URL for `video_id`.
@@ -30,6 +30,16 @@ fn stream_set_url(
             user_agent,
         },
     );
+}
+
+/// Checks that a resolved stream URL is actually served, through the same path playback uses.
+#[tauri::command]
+async fn stream_probe(
+    state: tauri::State<'_, Streams>,
+    url: String,
+    user_agent: Option<String>,
+) -> Result<u16, ()> {
+    Ok(stream::probe(&state.clients, &url, user_agent.as_deref()).await)
 }
 
 /// Renames a corrupt library database aside so the app can recreate it.
@@ -70,10 +80,7 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .manage(Streams {
             store: Arc::new(StreamStore::default()),
-            client: reqwest::Client::builder()
-                .connect_timeout(Duration::from_secs(10))
-                .build()
-                .expect("http client"),
+            clients: stream::Clients::new(),
         })
         .register_asynchronous_uri_scheme_protocol("mf-stream", |ctx, request, responder| {
             let app = ctx.app_handle().clone();
@@ -93,7 +100,7 @@ pub fn run() {
                     let _ = app.emit("stream:need-url", serde_json::json!({ "videoId": vid }));
                 };
                 let result = stream::proxy(
-                    &state.client,
+                    &state.clients,
                     &state.store,
                     &id,
                     range.as_deref(),
@@ -121,6 +128,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             stream_set_url,
+            stream_probe,
             backup_and_reset_db
         ])
         .run(tauri::generate_context!())

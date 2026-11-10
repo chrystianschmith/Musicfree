@@ -119,8 +119,83 @@ const FORWARD_HEADERS: [&str; 4] = [
     "accept-ranges",
 ];
 
-async fn fetch(client: &reqwest::Client, e: &Entry, range: (u64, u64)) -> Result<Upstream, String> {
-    let res = client
+/// IP family a googlevideo URL was issued for (its `ip=` parameter). The media servers answer
+/// 403 when the request arrives from another address than the one that asked for the URL,
+/// which happens on dual-stack networks if the two requests pick different families.
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum Family {
+    V4,
+    V6,
+}
+
+pub fn ip_family(url: &str) -> Option<Family> {
+    let query = url.split_once('?')?.1;
+    let ip = query.split('&').find_map(|kv| kv.strip_prefix("ip="))?;
+    if ip.contains(':') || ip.contains("%3A") || ip.contains("%3a") {
+        Some(Family::V6)
+    } else if ip.contains('.') {
+        Some(Family::V4)
+    } else {
+        None
+    }
+}
+
+/// HTTP clients pinned to each IP family, plus an unpinned one.
+pub struct Clients {
+    any: reqwest::Client,
+    v4: reqwest::Client,
+    v6: reqwest::Client,
+}
+
+impl Clients {
+    pub fn new() -> Self {
+        let base = || reqwest::Client::builder().connect_timeout(Duration::from_secs(10));
+        let any = base().build().expect("http client");
+        let v4 = base()
+            .local_address(std::net::IpAddr::V4(std::net::Ipv4Addr::UNSPECIFIED))
+            .build()
+            .unwrap_or_else(|_| any.clone());
+        let v6 = base()
+            .local_address(std::net::IpAddr::V6(std::net::Ipv6Addr::UNSPECIFIED))
+            .build()
+            .unwrap_or_else(|_| any.clone());
+        Self { any, v4, v6 }
+    }
+
+    fn for_url(&self, url: &str) -> &reqwest::Client {
+        match ip_family(url) {
+            Some(Family::V4) => &self.v4,
+            Some(Family::V6) => &self.v6,
+            None => &self.any,
+        }
+    }
+}
+
+impl Default for Clients {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Requests the first bytes of a stream URL and returns the HTTP status (0 on network error).
+pub async fn probe(clients: &Clients, url: &str, user_agent: Option<&str>) -> u16 {
+    let e = Entry {
+        url: url.to_string(),
+        expires_at: i64::MAX,
+        user_agent: user_agent.map(str::to_string),
+    };
+    match fetch(clients, &e, (0, 1023)).await {
+        Ok(up) => up.status,
+        Err(err) => {
+            log::warn!("probe failed: {err}");
+            0
+        }
+    }
+}
+
+async fn fetch(clients: &Clients, e: &Entry, range: (u64, u64)) -> Result<Upstream, String> {
+    let res = clients
+        .for_url(&e.url)
         .get(&e.url)
         .header("Range", format!("bytes={}-{}", range.0, range.1))
         .header("User-Agent", e.user_agent.as_deref().unwrap_or(DEFAULT_UA))
@@ -149,7 +224,7 @@ fn rejected(status: u16) -> bool {
 /// Serves one range of `id`, asking for a fresh URL (via `request_url`) at most once.
 /// Errors carry the HTTP status to return to the webview.
 pub async fn proxy(
-    client: &reqwest::Client,
+    client: &Clients,
     store: &StreamStore,
     id: &str,
     range_header: Option<&str>,
@@ -211,6 +286,24 @@ mod tests {
     }
 
     #[test]
+    fn detects_ip_family_of_stream_urls() {
+        assert_eq!(
+            ip_family("https://rr1.googlevideo.com/videoplayback?expire=1&ip=200.1.2.3&id=x"),
+            Some(Family::V4)
+        );
+        assert_eq!(
+            ip_family("https://rr1.googlevideo.com/videoplayback?ip=2804%3A14c%3A%3A1&id=x"),
+            Some(Family::V6)
+        );
+        assert_eq!(
+            ip_family("https://rr1.googlevideo.com/videoplayback?ip=2804:14c::1"),
+            Some(Family::V6)
+        );
+        assert_eq!(ip_family("http://127.0.0.1:9/a"), None);
+        assert_eq!(ip_family("https://x/y?zip=1.2.3.4"), None);
+    }
+
+    #[test]
     fn clamps_to_chunk() {
         assert_eq!(clamp_range(0, None), (0, CHUNK - 1));
         assert_eq!(clamp_range(10, Some(20)), (10, 20));
@@ -260,7 +353,7 @@ mod tests {
         let store = StreamStore::default();
         store.set("v", entry(server.url("/a")));
         let up = proxy(
-            &reqwest::Client::new(),
+            &Clients::new(),
             &store,
             "v",
             Some("bytes=0-9"),
@@ -303,7 +396,7 @@ mod tests {
             s2.set(id, entry(new_url.clone()));
         };
         let up = proxy(
-            &reqwest::Client::new(),
+            &Clients::new(),
             &store,
             "v",
             None,
@@ -334,7 +427,7 @@ mod tests {
             s2.set(id, entry(url.clone()));
         };
         let err = proxy(
-            &reqwest::Client::new(),
+            &Clients::new(),
             &store,
             "v",
             None,
@@ -352,7 +445,7 @@ mod tests {
         let store = StreamStore::default();
         let asked = AtomicUsize::new(0);
         let err = proxy(
-            &reqwest::Client::new(),
+            &Clients::new(),
             &store,
             "v",
             None,
