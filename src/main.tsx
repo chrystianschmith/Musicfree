@@ -3,7 +3,9 @@ import ReactDOM from "react-dom/client";
 import "./styles/globals.css";
 import App from "./App";
 import { initStreamBridge } from "./lib/stream";
+import { forwardConsoleToLog } from "./lib/logging";
 
+void forwardConsoleToLog();
 void initStreamBridge();
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(

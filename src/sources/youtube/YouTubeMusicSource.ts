@@ -63,7 +63,9 @@ export function createInnertube(): Promise<Innertube> {
       fetch: (input, init) => httpFetch(input as RequestInfo, init),
       cache: new UniversalCache(true),
       retrieve_player: true,
-      generate_session_locally: true,
+      // Fetch a real visitor session from YouTube: locally generated visitor data gets
+      // LOGIN_REQUIRED ("confirm you're not a bot") on the player endpoint.
+      generate_session_locally: false,
       lang: "pt",
       location: "BR",
     });
