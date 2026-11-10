@@ -26,6 +26,9 @@ importers:
       '@tauri-apps/plugin-sql':
         specifier: ^2.6.0
         version: 2.6.0
+      bgutils-js:
+        specifier: ^4.0.3
+        version: 4.0.3
       react:
         specifier: ^19.1.0
         version: 19.3.1
@@ -681,6 +684,9 @@ packages:
 
   bcp-47@2.1.2:
     resolution: {integrity: sha512-wsv86UuNFuPnVieKLyECTT+CP1WSAHeoIg5P3xu2kA9Z+7fVPoKt7dxzSeEhtJel0AI+NW3fIW3KtTKQKUCngg==}
+
+  bgutils-js@4.0.3:
+    resolution: {integrity: sha512-nvhrzqRYqFcC3AJbf1fENc/jzyMk95wH9UC9ruQzTZCq+itYWuHi2a9leK/bC1lLfi+R4a28wJZxpD5KiTFf+w==}
 
   brace-expansion@5.0.12:
     resolution: {integrity: sha512-YovQ3rzhaLMIrDjNDMkNS01tea93qhEhG5xy8f6+R0l+dw3Ki+5sCoIoI942iuLZTHWogWktgwVDhU09iNEimQ==}
@@ -1993,6 +1999,8 @@ snapshots:
       is-alphabetical: 2.0.1
       is-alphanumerical: 2.0.1
       is-decimal: 2.0.1
+
+  bgutils-js@4.0.3: {}
 
   brace-expansion@5.0.12:
     dependencies:

@@ -188,3 +188,20 @@ describe("bucketItems", () => {
     expect(b.playlists.map((p) => p.id)).toEqual(["VL1"]);
   });
 });
+
+describe("probeOffset", () => {
+  it("probes past the first MiB, where unauthenticated streams get cut off", async () => {
+    const { probeOffset } = await import("./mappers");
+    expect(probeOffset("https://x.googlevideo.com/videoplayback?clen=4311468&itag=140")).toBe(
+      2 * 1024 * 1024,
+    );
+    expect(probeOffset("https://x.googlevideo.com/videoplayback?clen=1500000")).toBe(
+      1500000 - 1024,
+    );
+  });
+  it("falls back to the start for short or unknown sizes", async () => {
+    const { probeOffset } = await import("./mappers");
+    expect(probeOffset("https://x.googlevideo.com/videoplayback?clen=900")).toBe(0);
+    expect(probeOffset("https://x.googlevideo.com/videoplayback?itag=140")).toBe(0);
+  });
+});

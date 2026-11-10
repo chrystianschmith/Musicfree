@@ -1,6 +1,6 @@
 [package]
 name = "musicfree"
-version = "0.2.3"
+version = "0.2.4"
 description = "Musicfree desktop music player"
 authors = ["Chrystian Schmith"]
 license = "MIT"

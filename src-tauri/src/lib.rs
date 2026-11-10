@@ -38,8 +38,15 @@ async fn stream_probe(
     state: tauri::State<'_, Streams>,
     url: String,
     user_agent: Option<String>,
+    start: Option<u64>,
 ) -> Result<u16, ()> {
-    Ok(stream::probe(&state.clients, &url, user_agent.as_deref()).await)
+    Ok(stream::probe(
+        &state.clients,
+        &url,
+        user_agent.as_deref(),
+        start.unwrap_or(0),
+    )
+    .await)
 }
 
 /// Renames a corrupt library database aside so the app can recreate it.
