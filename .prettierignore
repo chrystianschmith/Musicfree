@@ -5,4 +5,4 @@ src-tauri/icons
 pnpm-lock.yaml
 playwright-report
 test-results
-docs/superpowers
+docs/design

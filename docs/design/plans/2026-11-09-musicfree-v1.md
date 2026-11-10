@@ -1,14 +1,12 @@
 # Musicfree v1 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Desktop music player (Tauri 2 + React) que toca YouTube Music com UX estilo Spotify e gera instaladores para Windows/Linux/macOS via GitHub Actions.
 
 **Architecture:** UI React fala só com a interface `MusicSource` (YouTube real ou Mock) e com `LibraryRepo` (SQLite no Tauri, memória no navegador). O áudio toca num `<audio>` alimentado pelo protocolo `mf-stream://` do Rust, que faz proxy com Range e re-resolve URLs expiradas. Build web com Mock roda no Playwright para testes e capturas.
 
 **Tech Stack:** Tauri 2, Rust, React 19, TypeScript, Vite, Zustand, TanStack Query, youtubei.js, tauri-plugin-http/sql/log, Vitest, Playwright, Tabler Icons.
 
-**Spec:** `docs/superpowers/specs/2026-11-09-musicfree-design.md`
+**Spec:** `docs/design/specs/2026-11-09-musicfree-design.md`
 
 ## Global Constraints
 

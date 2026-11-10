@@ -23,7 +23,7 @@ CI runs the same checks on every pull request.
 
 - **YouTube changed something and a screen broke?** Everything YouTube-specific is in `src/sources/youtube/`. The mappers in `mappers.ts` are pure functions with unit tests; reproduce the new response shape in `mappers.test.ts` first, then fix the mapper. `pnpm smoke` runs a live check against the real API.
 - **Playback issues** are usually in `src/sources/youtube/YouTubeMusicSource.ts` (`resolveStream`) or the Rust proxy in `src-tauri/src/stream.rs`.
-- **UI** follows the design spec in `docs/superpowers/specs/`: one background color, no boxes or cards, icon-only controls, violet `#9F97F0` for active states.
+- **UI** follows the design spec in `docs/design/specs/`: one background color, no boxes or cards, icon-only controls, violet `#9F97F0` for active states.
 
 ## Commit style
 
