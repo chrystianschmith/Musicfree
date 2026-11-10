@@ -25,7 +25,7 @@
 
 ## Download
 
-Baixe o instalador do seu sistema em **[Releases](https://github.com/chrystianschmith/Musicfree/releases)**:
+Baixe o instalador do seu sistema na **[versão mais recente](https://github.com/chrystianschmith/Musicfree/releases/latest)**:
 
 | Sistema                       | Arquivo                                                                                      |
 | ----------------------------- | -------------------------------------------------------------------------------------------- |

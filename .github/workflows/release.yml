@@ -74,7 +74,7 @@ jobs:
             "More info → Run anyway"; on macOS right-click the app and choose **Open**.
             See the README for details.
           releaseDraft: false
-          prerelease: ${{ !startsWith(env.TAG, 'v1') && !startsWith(env.TAG, 'v2') }}
+          prerelease: false
           # Builds the release from the commit that triggered the run.
           releaseCommitish: ${{ github.sha }}
           args: ${{ matrix.args }}

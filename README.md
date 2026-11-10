@@ -35,7 +35,7 @@
 
 ## Download
 
-Get the installer for your system from **[Releases](https://github.com/chrystianschmith/Musicfree/releases)**:
+Get the installer for your system from the **[latest release](https://github.com/chrystianschmith/Musicfree/releases/latest)**:
 
 | System                          | File                                                                                        |
 | ------------------------------- | ------------------------------------------------------------------------------------------- |
