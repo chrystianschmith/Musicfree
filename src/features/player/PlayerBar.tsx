@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import {
   IconArrowsShuffle,
   IconHeart,
@@ -27,13 +28,27 @@ import { useLike } from "../library/useLibrary";
 import s from "./PlayerBar.module.css";
 
 export function PlayerBar() {
-  const p = usePlayer();
+  // Everything except position/duration: those tick ~4x per second and live in <Progress>.
+  const p = usePlayer(
+    useShallow((st) => ({
+      cur: st.current(),
+      playing: st.playing,
+      shuffle: st.shuffle,
+      repeat: st.repeat,
+      volume: st.volume,
+      muted: st.muted,
+      setShuffle: st.setShuffle,
+      prev: st.prev,
+      next: st.next,
+      toggle: st.toggle,
+      cycleRepeat: st.cycleRepeat,
+      toggleMute: st.toggleMute,
+      setVolume: st.setVolume,
+    })),
+  );
   const ui = useUI();
-  const cur = p.current();
-  const [scrub, setScrub] = useState<number | null>(null);
+  const cur = p.cur;
   const { liked, toggle: toggleLike } = useLike(cur);
-  const pos = scrub ?? p.position;
-  const dur = p.duration || (cur?.durationMs ?? 0) / 1000;
   const VolIcon =
     p.muted || p.volume === 0 ? IconVolume3 : p.volume < 0.5 ? IconVolume2 : IconVolume;
 
@@ -106,19 +121,7 @@ export function PlayerBar() {
             onClick={p.cycleRepeat}
           />
         </div>
-        <div className={s.progress}>
-          <span className={s.time}>{formatTime(cur ? pos : undefined)}</span>
-          <Slider
-            label="Progresso"
-            value={dur ? Math.min(1, pos / dur) : 0}
-            onChange={(v) => setScrub(v * dur)}
-            onCommit={(v) => {
-              setScrub(null);
-              p.seek(v * dur);
-            }}
-          />
-          <span className={s.time}>{formatTime(cur ? dur : undefined)}</span>
-        </div>
+        <Progress fallbackDuration={(cur?.durationMs ?? 0) / 1000} active={!!cur} />
       </div>
 
       <div className={s.right}>
@@ -157,5 +160,29 @@ export function PlayerBar() {
         />
       </div>
     </footer>
+  );
+}
+
+function Progress({ fallbackDuration, active }: { fallbackDuration: number; active: boolean }) {
+  const position = usePlayer((st) => st.position);
+  const duration = usePlayer((st) => st.duration);
+  const seek = usePlayer((st) => st.seek);
+  const [scrub, setScrub] = useState<number | null>(null);
+  const pos = scrub ?? position;
+  const dur = duration || fallbackDuration;
+  return (
+    <div className={s.progress}>
+      <span className={s.time}>{formatTime(active ? pos : undefined)}</span>
+      <Slider
+        label="Progresso"
+        value={dur ? Math.min(1, pos / dur) : 0}
+        onChange={(v) => setScrub(v * dur)}
+        onCommit={(v) => {
+          setScrub(null);
+          seek(v * dur);
+        }}
+      />
+      <span className={s.time}>{formatTime(active ? dur : undefined)}</span>
+    </div>
   );
 }

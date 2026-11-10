@@ -15,6 +15,7 @@ import { usePlaylists } from "../library/usePlaylists";
 import { usePlayer } from "../../store/player";
 import { startRadio } from "../../components/ContextMenu";
 import { TopBar } from "../../app/TopBar";
+import { usePersonalShelves } from "../recs/usePersonalShelves";
 import s from "./Home.module.css";
 
 function Quick({ icon: I, label, onClick }: { icon: Icon; label: string; onClick: () => void }) {
@@ -33,6 +34,7 @@ export function HomePage() {
   const { data: playlists = [] } = usePlaylists();
   const last = usePlayer((p) => p.current());
   const moods = home.data?.moods ?? [];
+  const personal = usePersonalShelves();
 
   return (
     <div>
@@ -80,6 +82,7 @@ export function HomePage() {
         </div>
       )}
       {home.isError && <SectionError onRetry={() => home.refetch()} />}
+      {!mood && personal.data?.map((shelf) => <ShelfRow key={`me-${shelf.title}`} shelf={shelf} />)}
       {home.data?.shelves.map((shelf, i) => (
         <ShelfRow key={`${mood}-${i}`} shelf={shelf} />
       ))}

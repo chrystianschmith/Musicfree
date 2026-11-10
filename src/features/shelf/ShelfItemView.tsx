@@ -6,6 +6,7 @@ import { Cover } from "../../components/Cover";
 import s from "./Shelf.module.css";
 
 type Props = {
+  index?: number;
   item: ShelfItem;
   size?: number;
   onPlay?: () => void;
@@ -45,13 +46,17 @@ export function itemInfo(item: ShelfItem) {
   }
 }
 
-export function ShelfItemView({ item, size = 168, onPlay, onContext }: Props) {
+export function ShelfItemView({ item, size = 168, onPlay, onContext, index = 0 }: Props) {
   const nav = useNavigate();
   const info = itemInfo(item);
   const round = item.kind === "artist";
   const open = () => (info.to ? nav(info.to) : onPlay?.());
   return (
-    <div className={s.item} style={{ width: size }} onContextMenu={onContext}>
+    <div
+      className={s.item}
+      style={{ width: size, "--i": Math.min(index, 10) } as React.CSSProperties}
+      onContextMenu={onContext}
+    >
       <button className={s.coverWrap} onClick={open} aria-label={info.title}>
         <Cover thumbs={info.thumbs} size={size} round={round} />
         {onPlay && (

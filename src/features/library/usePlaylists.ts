@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getRepo } from "../../db";
 import type { Album, Artist, Track } from "../../sources/types";
 import { useUI } from "../../store/ui";
+import { recordLike } from "../recs/store";
 
 export const libKeys = {
   playlists: ["lib", "playlists"] as const,
@@ -54,6 +55,7 @@ export function useLibraryActions() {
     async toggleLike(t: Track) {
       const liked = await (await getRepo()).toggleLike(t);
       inv(libKeys.liked, libKeys.likedIds);
+      if (liked) void recordLike(t);
       toast(liked ? "Adicionada às curtidas" : "Removida das curtidas");
       return liked;
     },

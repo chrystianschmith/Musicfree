@@ -129,3 +129,26 @@ describe("player store", () => {
     expect(s().volume).toBe(0);
   });
 });
+
+describe("appendTracks (endless queue)", () => {
+  it("appends only tracks not already queued and keeps the current one", () => {
+    s().playTracks(five, 4);
+    s().appendTracks([t(5), t(6), t(7), t(6)]);
+    expect(s().current()?.id).toBe("t5");
+    expect(
+      s()
+        .upcoming()
+        .map((x) => x.id),
+    ).toEqual(["t6", "t7"]);
+  });
+  it("shuffled queues receive the new tracks at the end of the order", () => {
+    s().playTracks(five, 0);
+    s().setShuffle(true);
+    s().appendTracks([t(8)]);
+    expect(s().upcoming().at(-1)?.id).toBe("t8");
+  });
+  it("starts playback when the queue is empty", () => {
+    s().appendTracks([t(1), t(2)]);
+    expect(s().current()?.id).toBe("t1");
+  });
+});

@@ -7,6 +7,9 @@ import { artistNames, SourceError } from "../../sources/types";
 import { getRepo } from "../../db";
 import { useQueryClient } from "@tanstack/react-query";
 import { libKeys } from "../library/usePlaylists";
+import { recordListen } from "../recs/store";
+import { extendQueueIfNeeded } from "../recs/autoplay";
+import type { Track } from "../../sources/types";
 
 /**
  * Bridges the player store and a single hidden <audio> element.
@@ -19,6 +22,16 @@ export function AudioEngine() {
   const prefetched = useRef<string | undefined>(undefined);
   /** Track id already written to history for the current load (recorded on first real play). */
   const historyFor = useRef<string | undefined>(undefined);
+  /** What has been heard of the loaded track, to feed the local taste profile. */
+  const heard = useRef<{ track: Track; max: number; dur: number } | undefined>(undefined);
+  const flushHeard = (finished = false) => {
+    const h = heard.current;
+    heard.current = undefined;
+    if (!h || historyFor.current !== h.track.id) return; // never actually played
+    const dur = h.dur || (h.track.durationMs ?? 0) / 1000;
+    if (finished) void recordListen(h.track, 1);
+    else if (dur > 0) void recordListen(h.track, Math.min(1, h.max / dur));
+  };
 
   const current = usePlayer((s) => s.current());
   const playing = usePlayer((s) => s.playing);
@@ -32,8 +45,11 @@ export function AudioEngine() {
     const el = ref.current;
     if (!el || !current) return;
     if (loadedId.current === current.id) return;
+    flushHeard();
     loadedId.current = current.id;
     historyFor.current = undefined;
+    heard.current = { track: current, max: 0, dur: 0 };
+    void extendQueueIfNeeded();
     retried.current = false;
     prefetched.current = undefined;
     let cancelled = false;
@@ -127,6 +143,10 @@ export function AudioEngine() {
         const el = e.currentTarget;
         const st = usePlayer.getState();
         st.setPosition(el.currentTime);
+        if (heard.current) {
+          heard.current.max = Math.max(heard.current.max, el.currentTime);
+          heard.current.dur = el.duration || 0;
+        }
         if (el.duration && el.currentTime / el.duration > 0.75) {
           const nextId = st.upcoming()[0]?.id;
           if (nextId && prefetched.current !== nextId) {
@@ -136,7 +156,14 @@ export function AudioEngine() {
         }
       }}
       onLoadedMetadata={(e) => usePlayer.getState().setDuration(e.currentTarget.duration)}
-      onEnded={() => usePlayer.getState().onEnded()}
+      onEnded={() => {
+        const st = usePlayer.getState();
+        const cur = st.current();
+        flushHeard(true);
+        // With repeat-one the same track plays again: start a fresh listen for it.
+        if (cur) heard.current = { track: cur, max: 0, dur: 0 };
+        st.onEnded();
+      }}
       onPlay={() => {
         usePlayer.getState().setPlaying(true);
         const cur = usePlayer.getState().current();

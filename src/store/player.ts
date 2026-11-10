@@ -28,6 +28,8 @@ type Actions = {
   playTracks(tracks: Track[], start?: number): void;
   playNext(t: Track): void;
   addToQueue(t: Track): void;
+  /** Appends tracks not yet in the queue (used by the endless queue). */
+  appendTracks(tracks: Track[]): void;
   removeUpcoming(k: number): void;
   moveUpcoming(from: number, to: number): void;
   jumpToUpcoming(k: number): void;
@@ -111,6 +113,18 @@ export const usePlayer = create<State & Actions>()((set, get) => {
       const s = get();
       if (s.index < 0) return get().playTracks([t]);
       set({ queue: [...s.queue, t], order: [...s.order, s.queue.length] });
+    },
+
+    appendTracks(tracks) {
+      const s = get();
+      const have = new Set(s.queue.map((t) => t.id));
+      const fresh = tracks.filter((t) => !have.has(t.id) && have.add(t.id));
+      if (!fresh.length) return;
+      if (s.index < 0) return get().playTracks(fresh);
+      set({
+        queue: [...s.queue, ...fresh],
+        order: [...s.order, ...fresh.map((_, i) => s.queue.length + i)],
+      });
     },
 
     removeUpcoming(k) {

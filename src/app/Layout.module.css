@@ -7,6 +7,31 @@
     "side main"
     "bar bar";
   position: relative;
+  transition: grid-template-columns 0.35s var(--ease-out);
+  isolation: isolate;
+}
+/* One continuous wash of the cover's colour behind everything: no panels, no edges. */
+.app::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ambient) 58%, transparent) 0%,
+      color-mix(in srgb, var(--ambient) 16%, transparent) 38%,
+      transparent 70%
+    ),
+    radial-gradient(
+      70% 55% at 100% 100%,
+      color-mix(in srgb, var(--ambient) 22%, transparent),
+      transparent 70%
+    );
+}
+.collapsed {
+  --sidebar-w: 76px;
 }
 .withPanel {
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr) var(--panel-w);
@@ -19,4 +44,8 @@
   overflow-y: auto;
   padding: 22px 28px 40px;
   position: relative;
+  scroll-behavior: smooth;
+}
+.page {
+  animation: mf-page 0.32s var(--ease-out) both;
 }

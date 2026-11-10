@@ -35,12 +35,12 @@ type Node = { type: string } & Record<string, any>;
 /** Clients tried in order when resolving a playable audio stream. */
 const STREAM_CLIENTS = [
   "ANDROID_VR",
-  "TV",
   "IOS",
+  "TV",
+  "YTMUSIC",
   "TV_SIMPLY",
   "WEB_EMBEDDED",
   "MWEB",
-  "YTMUSIC",
 ] as const;
 const CLIENT_UA: Record<string, string> = {
   ANDROID_VR:
@@ -128,7 +128,13 @@ export class YouTubeMusicSource implements MusicSource {
   home(mood?: string): Promise<HomeFeed> {
     return guard(async (yt) => {
       let feed = await yt.music.getHomeFeed();
-      const moods = feed.filters ?? [];
+      // `filters` is a getter that can throw on unusual responses; mood tabs are optional.
+      let moods: string[] = [];
+      try {
+        moods = feed.filters ?? [];
+      } catch {
+        /* no mood chips in this response */
+      }
       if (mood && moods.includes(mood)) feed = await feed.applyFilter(mood);
       const shelves = defined(
         (feed.sections ?? []).map((s) => carouselToShelf(s as unknown as Node)),

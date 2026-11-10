@@ -14,7 +14,10 @@
 
 ## Features
 
-- **Home with recommendations**: mood filters, mixes, new releases and artists from YouTube Music
+- **Recommendations from what you actually listen to**: a daily mix, "Because you listened to…", replay and top-artist shelves, built from a listening profile that never leaves your computer (finishing a song counts, skipping it right away counts against)
+- **Endless queue**: when the queue runs out, similar tracks keep the music going
+- **Home**: mood filters, mixes, new releases and artists from YouTube Music
+- **Fluid, ambient design**: the whole app is tinted with the colour of the current cover, with smooth page and list transitions and a collapsible sidebar
 - **Search** with live suggestions and tabs for songs, albums, artists and playlists
 - **Artist, album and playlist pages** with play, shuffle and start radio
 - **Now Playing** view inside the app: big cover art, **synced lyrics** (click a line to jump), queue and related tracks
