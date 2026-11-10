@@ -14,7 +14,7 @@ import {
   type Thumb,
   type Track,
 } from "../types";
-import { BROWSER_UA, httpFetch } from "../../lib/http";
+import { BROWSER_UA, fetchRange, httpFetch } from "../../lib/http";
 import { isTauri } from "../../lib/platform";
 import {
   bucketItems,
@@ -355,8 +355,20 @@ export class YouTubeMusicSource implements MusicSource {
           // A URL is only good if the media server really serves it: some clients hand out
           // URLs that answer 403 (missing PoToken, IP family mismatch…).
           const http = await probeStream(url, userAgent);
-          report.push(`${client}: ${describeUrl(url)} → HTTP ${http}`);
-          if (http !== 200 && http !== 206) continue;
+          let viaFetch = false;
+          if (http !== 200 && http !== 206 && isTauri()) {
+            // Second path: the same HTTP client the API calls use (they are known to work here).
+            const js = await fetchRange(url, userAgent, 0, 1023).then(
+              (r) => r.status,
+              () => 0,
+            );
+            viaFetch = js === 200 || js === 206;
+            report.push(`${client}: ${describeUrl(url)} → proxy HTTP ${http}, app HTTP ${js}`);
+            if (!viaFetch) continue;
+          } else {
+            report.push(`${client}: ${describeUrl(url)} → HTTP ${http}`);
+            if (http !== 200 && http !== 206) continue;
+          }
           console.warn(`[stream] ${videoId} ok — ${report.join("; ")}`);
           const expire = Number(new URL(url).searchParams.get("expire"));
           return {
@@ -364,6 +376,7 @@ export class YouTubeMusicSource implements MusicSource {
             mime: format.mime_type?.split(";")[0] ?? "audio/mp4",
             expiresAt: expire ? expire * 1000 : Date.now() + 5 * 3600_000,
             userAgent,
+            viaFetch,
           };
         } catch (e) {
           report.push(`${client}: ${e instanceof Error ? e.message : String(e)}`);
