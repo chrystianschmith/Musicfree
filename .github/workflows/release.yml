@@ -3,6 +3,8 @@ name: Release
 on:
   push:
     tags: ["v*"]
+    # Pushing to the `release` branch also publishes, tagged with the app version (v<package version>).
+    branches: [release]
   workflow_dispatch:
     inputs:
       version:
@@ -14,8 +16,8 @@ permissions:
   contents: write
 
 env:
-  # Tag push → its name; manual run → v<version> (tauri-action creates the tag).
-  TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
+  # Tag push → its name; manual run → v<version>; `release` branch → v<app version> (tauri-action creates the tag).
+  TAG: ${{ github.ref_type == 'tag' && github.ref_name || (github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version)) || 'v__VERSION__' }}
 
 jobs:
   build:
@@ -72,5 +74,7 @@ jobs:
             "More info → Run anyway"; on macOS right-click the app and choose **Open**.
             See the README for details.
           releaseDraft: false
-          prerelease: ${{ startsWith(env.TAG, 'v0.') }}
+          prerelease: ${{ !startsWith(env.TAG, 'v1') && !startsWith(env.TAG, 'v2') }}
+          # Builds the release from the commit that triggered the run.
+          releaseCommitish: ${{ github.sha }}
           args: ${{ matrix.args }}
