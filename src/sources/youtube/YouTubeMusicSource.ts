@@ -14,7 +14,8 @@ import {
   type Thumb,
   type Track,
 } from "../types";
-import { BROWSER_UA, fetchRange, httpFetch } from "../../lib/http";
+import { BROWSER_UA, httpFetch } from "../../lib/http";
+import { mintPoToken } from "./potoken";
 import { isTauri } from "../../lib/platform";
 import {
   bucketItems,
@@ -24,6 +25,7 @@ import {
   mapThumbs,
   mapTwoRow,
   onlyTracks,
+  probeOffset,
   textOf,
   type YtListItem,
   type YtPanelVideo,
@@ -34,18 +36,18 @@ import {
 type Node = { type: string } & Record<string, any>;
 
 /** Clients tried in order when resolving a playable audio stream. */
-const STREAM_CLIENTS = [
+/** Web clients: their URLs play in full when carrying a BotGuard PO token. */
+const POT_CLIENTS = ["YTMUSIC", "WEB", "MWEB"] as const;
+/** Clients that sometimes work without a token. */
+const OTHER_CLIENTS = [
   "ANDROID_VR",
-  "ANDROID",
   "IOS",
   "VISIONOS",
   "TV",
-  "TV_EMBEDDED",
-  "YTMUSIC",
   "TV_SIMPLY",
+  "ANDROID",
   "WEB_EMBEDDED",
-  "MWEB",
-  "WEB",
+  "TV_EMBEDDED",
 ] as const;
 
 let yt: Promise<Innertube> | undefined;
@@ -328,16 +330,48 @@ export class YouTubeMusicSource implements MusicSource {
     });
   }
 
+  /** Session-bound PO token (bound to the visitor data); minted once per session. */
+  private sessionPot?: Promise<string | undefined>;
+
+  private ensureSessionPot(yt: Innertube): Promise<string | undefined> {
+    this.sessionPot ??= (async () => {
+      if (!isTauri()) return undefined;
+      const visitorData = yt.session.context.client.visitorData;
+      if (!visitorData) return undefined;
+      try {
+        const pot = await mintPoToken(visitorData);
+        yt.session.po_token = pot;
+        if (yt.session.player) yt.session.player.po_token = pot;
+        console.warn("[potoken] session token ready");
+        return pot;
+      } catch (e) {
+        console.error("[potoken] session token failed", e);
+        this.sessionPot = undefined;
+        return undefined;
+      }
+    })();
+    return this.sessionPot;
+  }
+
   resolveStream(videoId: string): Promise<StreamInfo> {
     return guard(async (yt) => {
       const { Constants } = await import("youtubei.js");
       const uaOf = (client: string) =>
         (Constants.CLIENTS as Record<string, { USER_AGENT?: string }>)[client]?.USER_AGENT ??
         BROWSER_UA;
-      const report: string[] = [];
-      for (const client of STREAM_CLIENTS) {
+      const sessionPot = await this.ensureSessionPot(yt);
+      const videoPot = sessionPot ? await mintPoToken(videoId).catch(() => undefined) : undefined;
+      const clients = sessionPot
+        ? [...POT_CLIENTS, ...OTHER_CLIENTS]
+        : [...OTHER_CLIENTS, ...POT_CLIENTS];
+      const report: string[] = [sessionPot ? "pot: yes" : "pot: no"];
+      for (const client of clients) {
         try {
-          const info = await yt.getBasicInfo(videoId, { client });
+          const usesPot = (POT_CLIENTS as readonly string[]).includes(client);
+          const info = await yt.getBasicInfo(videoId, {
+            client,
+            ...(usesPot && videoPot ? { po_token: videoPot } : {}),
+          });
           const status = info.playability_status?.status;
           if (status && status !== "OK") {
             report.push(`${client}: ${status}`);
@@ -352,23 +386,11 @@ export class YouTubeMusicSource implements MusicSource {
           const url = await format.decipher(yt.session.player);
           if (!url) throw new Error("empty url");
           const userAgent = uaOf(client);
-          // A URL is only good if the media server really serves it: some clients hand out
-          // URLs that answer 403 (missing PoToken, IP family mismatch…).
-          const http = await probeStream(url, userAgent);
-          let viaFetch = false;
-          if (http !== 200 && http !== 206 && isTauri()) {
-            // Second path: the same HTTP client the API calls use (they are known to work here).
-            const js = await fetchRange(url, userAgent, 0, 1023).then(
-              (r) => r.status,
-              () => 0,
-            );
-            viaFetch = js === 200 || js === 206;
-            report.push(`${client}: ${describeUrl(url)} → proxy HTTP ${http}, app HTTP ${js}`);
-            if (!viaFetch) continue;
-          } else {
-            report.push(`${client}: ${describeUrl(url)} → HTTP ${http}`);
-            if (http !== 200 && http !== 206) continue;
-          }
+          // A URL only counts if the media server serves it past the first MiB, which is where
+          // tokenless streams get cut off.
+          const http = await probeStream(url, userAgent, probeOffset(url));
+          report.push(`${client}: ${describeUrl(url)} → HTTP ${http}`);
+          if (http !== 200 && http !== 206) continue;
           console.warn(`[stream] ${videoId} ok — ${report.join("; ")}`);
           const expire = Number(new URL(url).searchParams.get("expire"));
           return {
@@ -376,7 +398,6 @@ export class YouTubeMusicSource implements MusicSource {
             mime: format.mime_type?.split(";")[0] ?? "audio/mp4",
             expiresAt: expire ? expire * 1000 : Date.now() + 5 * 3600_000,
             userAgent,
-            viaFetch,
           };
         } catch (e) {
           report.push(`${client}: ${e instanceof Error ? e.message : String(e)}`);
@@ -403,14 +424,14 @@ function describeUrl(url: string): string {
   ].join(" ");
 }
 
-/** HTTP status of the first bytes of a stream URL, fetched the same way playback will. */
-async function probeStream(url: string, userAgent: string): Promise<number> {
+/** HTTP status of 1 KiB at `start` of a stream URL, fetched the same way playback will. */
+async function probeStream(url: string, userAgent: string, start: number): Promise<number> {
   if (isTauri()) {
     const { invoke } = await import("@tauri-apps/api/core");
-    return invoke<number>("stream_probe", { url, userAgent });
+    return invoke<number>("stream_probe", { url, userAgent, start });
   }
   try {
-    const res = await fetch(url, { headers: { Range: "bytes=0-1023", "User-Agent": userAgent } });
+    const res = await fetch(url, { headers: { Range: `bytes=${start}-${start + 1023}` } });
     return res.status;
   } catch {
     return 0;

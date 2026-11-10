@@ -12,11 +12,8 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use tokio::sync::Notify;
 
-/// Initial byte range fetched per request. The media servers answer 403 to ranges above a
-/// limit that depends on the client the URL was issued for, so the proxy halves this on 403.
-pub const CHUNK: u64 = 512 * 1024;
-/// Smallest chunk tried when the media server keeps rejecting larger ranges.
-pub const MIN_CHUNK: u64 = 32 * 1024;
+/// Byte range fetched per request from the media server.
+pub const CHUNK: u64 = 1024 * 1024;
 /// Treat URLs as expired this long before their real expiry.
 const EXPIRY_MARGIN_MS: i64 = 60_000;
 pub const DEFAULT_UA: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
@@ -150,8 +147,6 @@ pub struct Clients {
     v6: reqwest::Client,
     /// Route that last worked (0 = unpinned, 1 = IPv4, 2 = IPv6).
     preferred: std::sync::atomic::AtomicU8,
-    /// Range size the media server last accepted.
-    chunk: std::sync::atomic::AtomicU64,
 }
 
 impl Clients {
@@ -171,12 +166,7 @@ impl Clients {
             v4,
             v6,
             preferred: std::sync::atomic::AtomicU8::new(0),
-            chunk: std::sync::atomic::AtomicU64::new(CHUNK),
         }
-    }
-
-    pub fn chunk(&self) -> u64 {
-        self.chunk.load(std::sync::atomic::Ordering::Relaxed)
     }
 
     /// Routes to try for `url`, best guess first: the remembered working one, then the family
@@ -205,14 +195,14 @@ impl Default for Clients {
     }
 }
 
-/// Requests the first bytes of a stream URL and returns the HTTP status (0 on network error).
-pub async fn probe(clients: &Clients, url: &str, user_agent: Option<&str>) -> u16 {
+/// Requests 1 KiB at `start` of a stream URL and returns the HTTP status (0 on network error).
+pub async fn probe(clients: &Clients, url: &str, user_agent: Option<&str>, start: u64) -> u16 {
     let e = Entry {
         url: url.to_string(),
         expires_at: i64::MAX,
         user_agent: user_agent.map(str::to_string),
     };
-    match fetch(clients, &e, (0, 1023)).await {
+    match fetch(clients, &e, (start, start + 1023)).await {
         Ok(up) => up.status,
         Err(err) => {
             log::warn!("probe failed: {err}");
@@ -290,33 +280,6 @@ async fn fetch(clients: &Clients, e: &Entry, range: (u64, u64)) -> Result<Upstre
     last
 }
 
-/// Fetches a range, halving the chunk size while the server answers 403 (down to
-/// [`MIN_CHUNK`]); the accepted size is remembered. A 403 at the minimum size is a real rejection.
-async fn fetch_sized(
-    clients: &Clients,
-    e: &Entry,
-    start: u64,
-    end: Option<u64>,
-) -> Result<Upstream, String> {
-    let mut chunk = clients.chunk();
-    loop {
-        let res = fetch(clients, e, clamp_range(start, end, chunk)).await;
-        match &res {
-            Ok(up) if up.status == 403 && chunk > MIN_CHUNK => {
-                chunk = (chunk / 2).max(MIN_CHUNK);
-                log::warn!("403 from media server, retrying with {chunk}-byte ranges");
-            }
-            Ok(up) if !rejected(up.status) => {
-                clients
-                    .chunk
-                    .store(chunk, std::sync::atomic::Ordering::Relaxed);
-                return res;
-            }
-            _ => return res,
-        }
-    }
-}
-
 fn rejected(status: u16) -> bool {
     matches!(status, 401 | 403 | 404 | 410)
 }
@@ -342,7 +305,7 @@ pub async fn proxy(
     };
 
     for attempt in 0..2 {
-        match fetch_sized(client, &entry, start, end).await {
+        match fetch(client, &entry, clamp_range(start, end, CHUNK)).await {
             Ok(up) if !rejected(up.status) => return Ok(up),
             Ok(up) if up.status == 416 => return Ok(up),
             outcome => {
@@ -469,61 +432,6 @@ mod tests {
                 .iter()
                 .any(|(k, v)| k == "content-range" && v == "bytes 0-9/100")
         );
-    }
-
-    #[tokio::test]
-    async fn shrinks_the_chunk_until_the_server_accepts_it() {
-        // Media servers answer 403 to ranges above a size limit even for valid URLs.
-        let server = MockServer::start_async().await;
-        let small = server
-            .mock_async(|w, t| {
-                w.path("/a").header("Range", "bytes=0-131071");
-                t.status(206).body("ok");
-            })
-            .await;
-        server
-            .mock_async(|w, t| {
-                w.path("/a");
-                t.status(403);
-            })
-            .await;
-        let store = StreamStore::default();
-        store.set("v", entry(server.url("/a")));
-        let clients = Clients::new();
-        let asked = AtomicUsize::new(0);
-        let ask = |_: &str| {
-            asked.fetch_add(1, Ordering::SeqCst);
-        };
-        let up = proxy(
-            &clients,
-            &store,
-            "v",
-            Some("bytes=0-"),
-            &ask,
-            Duration::from_millis(50),
-        )
-        .await
-        .unwrap();
-        assert_eq!(up.body, b"ok");
-        assert_eq!(
-            asked.load(Ordering::SeqCst),
-            0,
-            "a size rejection must not trigger a re-resolve"
-        );
-        // The accepted size is remembered for the next request.
-        small.assert_hits_async(1).await;
-        let _ = proxy(
-            &clients,
-            &store,
-            "v",
-            Some("bytes=0-"),
-            &ask,
-            Duration::from_millis(50),
-        )
-        .await
-        .unwrap();
-        small.assert_hits_async(2).await;
-        assert_eq!(clients.chunk(), 131_072);
     }
 
     #[tokio::test]

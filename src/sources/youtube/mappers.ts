@@ -247,3 +247,13 @@ export function bucketItems(items: (ShelfItem | undefined)[]) {
   }
   return out;
 }
+
+/**
+ * Byte offset to probe a stream URL at. Streams without a valid PO token are served only up
+ * to ~1 MiB, so a probe of the first bytes would wrongly pass; probe past that point.
+ */
+export function probeOffset(url: string): number {
+  const clen = Number(new URL(url).searchParams.get("clen")) || 0;
+  if (clen > 2 * 1024 * 1024 + 1024) return 2 * 1024 * 1024;
+  return Math.max(0, clen - 1024);
+}

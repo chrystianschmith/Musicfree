@@ -66,8 +66,6 @@ export type StreamInfo = {
   mime: string;
   expiresAt: number;
   userAgent?: string;
-  /** The Rust proxy can't reach this URL but the app's HTTP client can: download it instead. */
-  viaFetch?: boolean;
 };
 
 export type HomeFeed = { moods: string[]; shelves: Shelf[] };
