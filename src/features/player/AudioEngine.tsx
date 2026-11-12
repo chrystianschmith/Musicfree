@@ -20,6 +20,8 @@ export function AudioEngine() {
   const loadedId = useRef<string | undefined>(undefined);
   const retried = useRef(false);
   const prefetched = useRef<string | undefined>(undefined);
+  /** Set when we pause the old track ourselves; its (asynchronous) pause event must not stop the new one. */
+  const swallowPause = useRef(false);
   /** Track id already written to history for the current load (recorded on first real play). */
   const historyFor = useRef<string | undefined>(undefined);
   /** What has been heard of the loaded track, to feed the local taste profile. */
@@ -53,6 +55,15 @@ export function AudioEngine() {
     retried.current = false;
     prefetched.current = undefined;
     let cancelled = false;
+    // Silence the previous track right away instead of letting it play until the next URL resolves.
+    if (el.getAttribute("src")) {
+      if (!el.paused) {
+        swallowPause.current = true;
+        el.pause();
+      }
+      el.removeAttribute("src");
+      el.load();
+    }
     playableUrl(current.id)
       .then((url) => {
         if (cancelled) return;
@@ -147,12 +158,13 @@ export function AudioEngine() {
           heard.current.max = Math.max(heard.current.max, el.currentTime);
           heard.current.dur = el.duration || 0;
         }
-        if (el.duration && el.currentTime / el.duration > 0.75) {
-          const nextId = st.upcoming()[0]?.id;
-          if (nextId && prefetched.current !== nextId) {
-            prefetched.current = nextId;
-            prefetch(nextId);
-          }
+      }}
+      onPlaying={() => {
+        // Resolve the next track while this one plays, so a skip finds it ready.
+        const nextId = usePlayer.getState().upcoming()[0]?.id;
+        if (nextId && prefetched.current !== nextId) {
+          prefetched.current = nextId;
+          prefetch(nextId);
         }
       }}
       onLoadedMetadata={(e) => usePlayer.getState().setDuration(e.currentTarget.duration)}
@@ -174,10 +186,17 @@ export function AudioEngine() {
             .then(() => qc.invalidateQueries({ queryKey: libKeys.history }));
         }
       }}
-      onPause={(e) => !e.currentTarget.ended && usePlayer.getState().setPlaying(false)}
+      onPause={(e) => {
+        if (swallowPause.current) {
+          swallowPause.current = false;
+          return;
+        }
+        if (!e.currentTarget.ended) usePlayer.getState().setPlaying(false);
+      }}
       onError={(e) => {
         const cur = usePlayer.getState().current();
-        if (!cur) return;
+        if (!cur || !e.currentTarget.getAttribute("src")) return; // emptied on purpose
+
         if (!retried.current) {
           // Expired or rejected URL: resolve once more and resume where we were.
           retried.current = true;

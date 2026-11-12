@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mapListItem, mapPanelVideo, mapThumbs, mapTwoRow, textOf } from "./mappers";
+import { mapListItem, mapPanelVideo, mapThumbs, mapTwoRow, textOf, orderClients } from "./mappers";
 
 const thumbs = [
   { url: "https://lh3.googleusercontent.com/abc=w60-h60-l90-rj", width: 60, height: 60 },
@@ -203,5 +203,15 @@ describe("probeOffset", () => {
     const { probeOffset } = await import("./mappers");
     expect(probeOffset("https://x.googlevideo.com/videoplayback?clen=900")).toBe(0);
     expect(probeOffset("https://x.googlevideo.com/videoplayback?itag=140")).toBe(0);
+  });
+});
+
+describe("orderClients", () => {
+  it("tries the client that last worked first, keeping the rest in order", () => {
+    expect(orderClients(["A", "B", "C", "D"], "C")).toEqual(["C", "A", "B", "D"]);
+  });
+  it("keeps the order when there is no preferred client or it is unknown", () => {
+    expect(orderClients(["A", "B"], undefined)).toEqual(["A", "B"]);
+    expect(orderClients(["A", "B"], "Z")).toEqual(["A", "B"]);
   });
 });

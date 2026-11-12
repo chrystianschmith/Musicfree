@@ -26,6 +26,7 @@ import {
   mapTwoRow,
   onlyTracks,
   probeOffset,
+  orderClients,
   textOf,
   type YtListItem,
   type YtPanelVideo,
@@ -51,6 +52,8 @@ const OTHER_CLIENTS = [
 ] as const;
 
 let yt: Promise<Innertube> | undefined;
+/** Client that produced the last playable stream; tried first next time. */
+let lastGoodClient: string | undefined;
 
 /** Lazily creates the InnerTube session (loads youtubei.js only when first needed). */
 export function createInnertube(): Promise<Innertube> {
@@ -361,9 +364,10 @@ export class YouTubeMusicSource implements MusicSource {
         BROWSER_UA;
       const sessionPot = await this.ensureSessionPot(yt);
       const videoPot = sessionPot ? await mintPoToken(videoId).catch(() => undefined) : undefined;
-      const clients = sessionPot
-        ? [...POT_CLIENTS, ...OTHER_CLIENTS]
-        : [...OTHER_CLIENTS, ...POT_CLIENTS];
+      const clients = orderClients(
+        sessionPot ? [...POT_CLIENTS, ...OTHER_CLIENTS] : [...OTHER_CLIENTS, ...POT_CLIENTS],
+        lastGoodClient,
+      );
       const report: string[] = [sessionPot ? "pot: yes" : "pot: no"];
       for (const client of clients) {
         try {
@@ -391,6 +395,7 @@ export class YouTubeMusicSource implements MusicSource {
           const http = await probeStream(url, userAgent, probeOffset(url));
           report.push(`${client}: ${describeUrl(url)} → HTTP ${http}`);
           if (http !== 200 && http !== 206) continue;
+          lastGoodClient = client;
           console.warn(`[stream] ${videoId} ok — ${report.join("; ")}`);
           const expire = Number(new URL(url).searchParams.get("expire"));
           return {

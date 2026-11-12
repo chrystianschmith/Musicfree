@@ -14,6 +14,10 @@ const REQUEST_KEY = "O43z0dpjhgX20SCx4KAo";
 
 type Minter = { minter: WebPoMinter; expiresAt: number };
 let current: Promise<Minter> | undefined;
+/** After BotGuard fails, wait this long before trying again instead of retrying on every track. */
+const RETRY_AFTER_MS = 15 * 60_000;
+let failedAt = 0;
+let lastError: unknown;
 
 async function createMinter(): Promise<Minter> {
   const fetchFn = httpFetch as typeof fetch;
@@ -48,15 +52,21 @@ async function createMinter(): Promise<Minter> {
 }
 
 async function getMinter(): Promise<WebPoMinter> {
+  if (!current && failedAt && Date.now() - failedAt < RETRY_AFTER_MS) throw lastError;
   if (current) {
     const m = await current.catch(() => undefined);
     if (m && m.expiresAt > Date.now()) return m.minter;
   }
   current = createMinter();
-  current.catch((e) => {
-    console.error("[potoken] could not initialise BotGuard", e);
-    current = undefined;
-  });
+  current.then(
+    () => (failedAt = 0),
+    (e) => {
+      console.error("[potoken] could not initialise BotGuard", e);
+      current = undefined;
+      failedAt = Date.now();
+      lastError = e;
+    },
+  );
   return (await current).minter;
 }
 

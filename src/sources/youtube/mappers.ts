@@ -257,3 +257,9 @@ export function probeOffset(url: string): number {
   if (clen > 2 * 1024 * 1024 + 1024) return 2 * 1024 * 1024;
   return Math.max(0, clen - 1024);
 }
+
+/** Puts the client that last produced a playable stream first, so it is tried before the rest. */
+export function orderClients<T extends string>(clients: readonly T[], preferred?: string): T[] {
+  const first = clients.find((c) => c === preferred);
+  return first ? [first, ...clients.filter((c) => c !== first)] : [...clients];
+}
