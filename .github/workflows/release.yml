@@ -64,15 +64,15 @@ jobs:
           releaseBody: |
             ## Download
 
-            | System | File |
+            | Sistema | Arquivo |
             |---|---|
-            | Windows 10/11 | `Musicfree_*_x64-setup.exe` |
-            | macOS (Intel and Apple Silicon) | `Musicfree_*_universal.dmg` |
-            | Linux | `.AppImage` (any distro) or `.deb` (Debian/Ubuntu) |
+            | Windows 10/11 | `Musicfree_*_x64-setup.exe` (instalador em português) |
+            | macOS (Intel e Apple Silicon) | `Musicfree_*_universal.dmg` |
+            | Linux | `.AppImage` (qualquer distro) ou `.deb` (Debian/Ubuntu) |
 
-            The installers are not code-signed yet. On first launch Windows SmartScreen shows
-            "More info → Run anyway"; on macOS right-click the app and choose **Open**.
-            See the README for details.
+            Os instaladores ainda não são assinados digitalmente. Na primeira execução, o Windows
+            SmartScreen mostra "Mais informações → Executar assim mesmo"; no macOS, clique com o
+            botão direito no app e escolha **Abrir**. Veja o README para mais detalhes.
           releaseDraft: false
           prerelease: false
           # Builds the release from the commit that triggered the run.
