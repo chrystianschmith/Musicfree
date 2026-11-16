@@ -45,7 +45,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "jsdom": "^31.0.0",
     "prettier": "^3.9.10",
-    "sql.js": "^1.15.2",
+    "sql.js": "^1.16.0",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.72.2",
     "vite": "^8.0.16",
