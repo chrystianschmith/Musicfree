@@ -9,7 +9,7 @@ import {
 } from "@tabler/icons-react";
 import { IconButton } from "../../components/IconButton";
 import type { MiniState } from "../../app/desktop";
-import { expandFromMini } from "./openMini";
+import { closeMini, expandFromMini } from "./openMini";
 import s from "./MiniPlayer.module.css";
 
 const send = (action: string) =>
@@ -30,9 +30,13 @@ export function MiniPlayer() {
       stop = un;
       await emitTo("main", "mini:hello", null);
     });
+    const bye = () =>
+      void import("@tauri-apps/api/event").then(({ emitTo }) => emitTo("main", "mini:bye", null));
+    window.addEventListener("beforeunload", bye);
     return () => {
       alive = false;
       stop?.();
+      window.removeEventListener("beforeunload", bye);
     };
   }, []);
 
@@ -86,11 +90,7 @@ export function MiniPlayer() {
           icon={IconX}
           label="Fechar mini player"
           size={15}
-          onClick={() =>
-            void import("@tauri-apps/api/webviewWindow").then(({ getCurrentWebviewWindow }) =>
-              getCurrentWebviewWindow().close(),
-            )
-          }
+          onClick={() => void closeMini()}
         />
       </div>
       <div className={s.progress} aria-hidden>

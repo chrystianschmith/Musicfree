@@ -12,8 +12,8 @@
 
 ## Funções
 
-- **Recomendações conforme o que você escuta**: mix do dia, "Porque você ouviu…", "Voltar a ouvir" e seus artistas mais tocados, a partir de um perfil de escuta que fica só no seu computador (ouvir até o fim conta a favor, pular logo conta contra)
-- **Fila infinita**: quando a fila acaba, músicas parecidas continuam tocando
+- **Recomendações por estilo, conforme o que você escuta**: mix do dia, "Porque você ouviu…", "Voltar a ouvir" e seus artistas mais tocados. As sugestões vêm do mesmo álbum, do mesmo artista e de artistas parecidos, sem repetir a mesma música em outra versão (ao vivo, cover, karaokê, reupload). O perfil de escuta fica só no seu computador: ouvir até o fim conta a favor, pular logo conta contra
+- **Fila infinita**: quando a fila acaba, músicas do mesmo estilo continuam tocando
 - **Início**: filtros por clima, mixes, lançamentos e artistas do YouTube Music
 - **Design fluido e ambiente**: o app inteiro ganha o tom da capa atual, com transições suaves e barra lateral recolhível
 - **Busca** com sugestões enquanto você digita e abas para músicas, álbuns, artistas e playlists
@@ -23,6 +23,7 @@
 - **Fila**: tocar a seguir, adicionar à fila, reordenar, aleatório, repetir uma ou todas
 - **Atalhos e teclas de mídia**: `Espaço`, `Ctrl+←/→`, `Ctrl+↑/↓`, `Ctrl+L` (letra), `Ctrl+K` ou `/` (busca), além das teclas de mídia e do painel de mídia do sistema
 - **Continua de onde parou**: a última fila e a posição voltam quando você abre o app (pausado)
+- **Feito para o Windows**: barra de título escura com Snap Layouts, efeito Mica no Windows 11, ícone na bandeja (tocar/pausar, próxima, anterior), fechar para a bandeja, botões de controle na miniatura da barra de tarefas, **mini player** sempre visível e interface nítida em 125% e 150%
 - Tudo roda **dentro do app**: sem abrir navegador, sem conta, sem anúncios
 
 ## Download
@@ -63,7 +64,7 @@ Arquitetura, stack, comandos de teste, como publicar uma versão e estrutura do 
 ## Como funciona, em resumo
 
 - **Músicas**: o app pede o áudio a vários clientes do YouTube e fica com o primeiro que o servidor realmente entrega. Para passar pela verificação anti-bot, ele roda dentro do app o mesmo script que o site do YouTube roda no navegador (BotGuard) e anexa o token gerado aos pedidos.
-- **Recomendações**: um perfil de escuta salvo no seu computador. Músicas ouvidas até o fim e curtidas sobem, músicas puladas logo descem, e o que você ouviu há muito tempo vai perdendo peso. As músicas mais fortes viram rádios do YouTube Music, que alimentam o Início e a fila infinita.
+- **Recomendações**: um perfil de escuta salvo no seu computador. Músicas ouvidas até o fim e curtidas sobem, músicas puladas logo descem, e o que você ouviu há muito tempo vai perdendo peso. As músicas mais fortes servem de ponto de partida: o app busca outras faixas do álbum, as mais tocadas do artista, as de artistas parecidos (o "estilo") e a aba Relacionadas, descarta outras versões da mesma música e mistura tudo de forma equilibrada. O rádio do YouTube só completa quando falta música.
 
 ## Problemas comuns
 

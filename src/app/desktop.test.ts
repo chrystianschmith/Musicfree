@@ -10,8 +10,9 @@ vi.mock("@tauri-apps/api/event", () => ({
     listeners.set(name, cb);
     return () => listeners.delete(name);
   }),
-  emitTo: vi.fn(async () => undefined),
+  emitTo: (...a: unknown[]) => emitTo(...(a as [])),
 }));
+const emitTo = vi.fn(async () => undefined);
 
 import { handleMediaCommand, initDesktop, platformClass } from "./desktop";
 
@@ -75,6 +76,26 @@ describe("initDesktop", () => {
     listeners.get("media:command")!({ payload: "next" });
     expect(usePlayer.getState().current()?.id).toBe("t2");
     expect(document.documentElement.classList.contains("mica")).toBe(false);
+  });
+
+  it("sends the mini player its state only while it is open", async () => {
+    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
+    invoke.mockResolvedValue("none");
+    await initDesktop(WIN);
+    emitTo.mockClear();
+    usePlayer.getState().playTracks([t(1)], 0);
+    expect(emitTo).not.toHaveBeenCalled();
+    listeners.get("mini:hello")!({ payload: null });
+    usePlayer.getState().setPosition(12);
+    expect(emitTo).toHaveBeenLastCalledWith(
+      "mini",
+      "mini:state",
+      expect.objectContaining({ position: 12 }),
+    );
+    listeners.get("mini:bye")!({ payload: null });
+    emitTo.mockClear();
+    usePlayer.getState().setPosition(13);
+    expect(emitTo).not.toHaveBeenCalled();
   });
 
   it("only adds the platform class in a plain browser", async () => {

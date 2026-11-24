@@ -66,7 +66,13 @@ export async function initDesktop(ua = navigator.userAgent) {
   if (backdrop === "mica") document.documentElement.classList.add("mica");
 
   await listen("media:command", (e) => handleMediaCommand(e.payload));
-  await listen("mini:hello", () => void emitTo("mini", "mini:state", miniState()));
+  // The mini player says hello when it opens and bye when it closes; only then is it fed.
+  let miniOpen = false;
+  await listen("mini:hello", () => {
+    miniOpen = true;
+    void emitTo("mini", "mini:state", miniState());
+  });
+  await listen("mini:bye", () => (miniOpen = false));
 
   // Keep the tray tooltip / taskbar play button and the mini player in step with the player.
   let last = "";
@@ -79,6 +85,6 @@ export async function initDesktop(ua = navigator.userAgent) {
       last = key;
       void invoke("set_now_playing", { title, playing: s.playing }).catch(() => undefined);
     }
-    void emitTo("mini", "mini:state", miniState()).catch(() => undefined);
+    if (miniOpen) void emitTo("mini", "mini:state", miniState()).catch(() => undefined);
   });
 }

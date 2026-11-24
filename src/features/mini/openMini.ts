@@ -27,14 +27,22 @@ export async function openMiniPlayer() {
   if (isTauri()) await getCurrentWebviewWindow().minimize();
 }
 
+/** Closes the mini player, telling the main window to stop sending it updates. */
+export async function closeMini() {
+  const { emitTo } = await import("@tauri-apps/api/event");
+  await emitTo("main", "mini:bye", null).catch(() => undefined);
+  const { getCurrentWebviewWindow } = await import("@tauri-apps/api/webviewWindow");
+  await getCurrentWebviewWindow().close();
+}
+
 /** Back to the full window: show and focus it, then close the mini player. */
 export async function expandFromMini() {
-  const { WebviewWindow, getCurrentWebviewWindow } = await import("@tauri-apps/api/webviewWindow");
+  const { WebviewWindow } = await import("@tauri-apps/api/webviewWindow");
   const main = await WebviewWindow.getByLabel("main");
   if (main) {
     await main.unminimize();
     await main.show();
     await main.setFocus();
   }
-  await getCurrentWebviewWindow().close();
+  await closeMini();
 }

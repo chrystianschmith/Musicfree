@@ -14,8 +14,8 @@
 
 ## Features
 
-- **Recommendations from what you actually listen to**: a daily mix, "Because you listened to…", replay and top-artist shelves, built from a listening profile that never leaves your computer (finishing a song counts, skipping it right away counts against)
-- **Endless queue**: when the queue runs out, similar tracks keep the music going
+- **Recommendations by style, from what you actually listen to**: a daily mix, "Because you listened to…", replay and top-artist shelves. Suggestions come from the same album, the same artist and similar artists, never another version of a song you know (live, cover, karaoke, re-upload). The listening profile never leaves your computer: finishing a song counts, skipping it right away counts against
+- **Endless queue**: when the queue runs out, tracks of the same style keep the music going
 - **Home**: mood filters, mixes, new releases and artists from YouTube Music
 - **Fluid, ambient design**: the whole app is tinted with the colour of the current cover, with smooth page and list transitions and a collapsible sidebar
 - **Search** with live suggestions and tabs for songs, albums, artists and playlists
@@ -25,6 +25,7 @@
 - **Queue**: play next, add to queue, reorder, shuffle, repeat one/all
 - **Keyboard and OS media keys**: `Space`, `Ctrl+←/→`, `Ctrl+↑/↓`, `Ctrl+L` (lyrics), `Ctrl+K` or `/` (search), plus media keys and the system media panel
 - **Resumes where you left off**: the last queue and position are restored when the app opens (paused)
+- **Made for Windows**: dark title bar with Snap Layouts, Mica on Windows 11, tray icon (play/pause, next, previous), close to tray, taskbar thumbnail buttons, an always-on-top **mini player**, and a crisp UI at 125 % and 150 % scaling
 - Everything runs **inside the app**: no browser windows, no accounts, no ads
 
 | Search                                 | Artist                                 | Now Playing                                     |
@@ -81,7 +82,7 @@ flowchart LR
 - **`MusicSource`** is the only door to YouTube Music. Nothing from `youtubei.js` leaks outside `src/sources/youtube/`, so when YouTube changes something, the fix lives in one folder. A mock source with fictional data powers development, tests and these screenshots.
 - **Playable streams**: for each track the app asks several YouTube clients for an audio URL and keeps the first one the media server really serves, checked past the first MiB, which is where unverified streams get cut off. To pass YouTube's bot checks it runs BotGuard, the same attestation script youtube.com runs, inside the webview via [bgutils-js](https://github.com/LuanRT/BgUtils), and attaches the resulting proof-of-origin (PO) tokens. API requests leave the app with the `Origin` and `User-Agent` a browser would send.
 - **Stream proxy (Rust)**: the `<audio>` element loads `mf-stream://<videoId>`. The proxy forwards `Range` requests in 1 MiB chunks with the right client headers, tries every network route (and remembers the one that works), and when a URL expires or is rejected it asks the front end for a fresh one **once** before skipping the track.
-- **Recommendations** come from a listening profile stored in the local database: finished tracks and likes raise a track's score, early skips lower it, and old listens fade with a 30-day half-life. The strongest tracks seed YouTube Music radios, which feed the personal Home shelves and the endless queue.
+- **Recommendations** come from a listening profile stored in the local database: finished tracks and likes raise a track's score, early skips lower it, and old listens fade with a 30-day half-life. The strongest tracks are seeds: the app gathers other tracks from their album, the artist's top tracks, top tracks of similar artists (the "style") and the Related tab, drops other versions of the same song, and mixes them in balanced rounds. YouTube's radio only fills gaps. See `src/features/recs/`.
 - **Library** lives in SQLite (`tauri-plugin-sql`). The same contract test suite runs against the SQLite repo (via sql.js) and the in-memory repo.
 - **Lyrics** come from [LRCLIB](https://lrclib.net) (free, no key) and are cached locally.
 

@@ -5,6 +5,8 @@
 import { describe, expect, it } from "vitest";
 import { YouTubeMusicSource } from "../src/sources/youtube/YouTubeMusicSource";
 import { browserLikeHeaders } from "../src/lib/http";
+import { createRecommender } from "../src/features/recs/engine";
+import { isAltVersion, titleKey } from "../src/features/recs/titles";
 
 const src = new YouTubeMusicSource();
 
@@ -23,6 +25,22 @@ describe("YouTube Music (live)", { timeout: 60_000 }, () => {
   it("loads the home feed", async () => {
     const h = await src.home();
     expect(h.shelves.length).toBeGreaterThan(0);
+  });
+
+  it("recommends by style: no other versions of the seed, no covers, varied artists", async () => {
+    const r = await src.search("Coldplay Yellow", "songs");
+    const seed = r.songs[0];
+    const recs = await createRecommender(src).recommendFor([seed], { limit: 12 });
+    console.log(
+      "recommendations:",
+      recs.map((t) => `${t.title} - ${t.artists[0]?.name}`),
+    );
+    expect(recs.length).toBeGreaterThanOrEqual(8);
+    const keys = recs.map((t) => titleKey(t.title));
+    expect(new Set(keys).size).toBe(keys.length);
+    expect(keys).not.toContain(titleKey(seed.title));
+    expect(recs.filter((t) => isAltVersion(t.title))).toEqual([]);
+    expect(new Set(recs.map((t) => t.artists[0]?.name)).size).toBeGreaterThanOrEqual(3);
   });
 
   it("resolves a playable audio stream", async () => {
