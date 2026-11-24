@@ -57,6 +57,24 @@ jobs:
       - run: cargo test
         working-directory: src-tauri
 
+  rust-windows:
+    name: Rust on Windows (clippy, test)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: mkdir -p dist
+        shell: bash
+      - run: cargo clippy --all-targets -- -D warnings
+        working-directory: src-tauri
+      - run: cargo test
+        working-directory: src-tauri
+
   smoke:
     name: Live YouTube smoke test
     runs-on: ubuntu-latest

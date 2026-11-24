@@ -12,13 +12,15 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "Musicfree",
         "width": 1280,
         "height": 800,
         "minWidth": 960,
         "minHeight": 600,
         "decorations": true,
-        "backgroundColor": "#111114"
+        "backgroundColor": "#111114",
+        "theme": "Dark"
       }
     ],
     "security": {

@@ -1,3 +1,4 @@
+mod desktop;
 mod stream;
 
 use std::sync::Arc;
@@ -133,10 +134,39 @@ pub fn run() {
                 responder.respond(response);
             });
         })
+        .setup(|app| {
+            app.manage(desktop::Desktop::load(app.handle()));
+            if let Some(main) = app.get_webview_window("main") {
+                desktop::setup(app.handle(), &main);
+            }
+            Ok(())
+        })
+        .on_window_event(|window, event| {
+            if window.label() != "main" {
+                return;
+            }
+            match event {
+                tauri::WindowEvent::CloseRequested { api, .. } => {
+                    let state = window.state::<desktop::Desktop>();
+                    if state
+                        .close_to_tray
+                        .load(std::sync::atomic::Ordering::Relaxed)
+                    {
+                        api.prevent_close();
+                        let _ = window.hide();
+                    }
+                }
+                // Closing the main window for real quits, mini player included.
+                tauri::WindowEvent::Destroyed => window.app_handle().exit(0),
+                _ => {}
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             stream_set_url,
             stream_probe,
-            backup_and_reset_db
+            backup_and_reset_db,
+            desktop::desktop_backdrop,
+            desktop::set_now_playing
         ])
         .run(tauri::generate_context!())
         .expect("error while running Musicfree");

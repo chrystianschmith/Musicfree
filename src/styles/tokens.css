@@ -15,3 +15,12 @@
   --radius-cover: 10px;
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
+
+/* Windows: the system font, and the Mica backdrop showing through the window background. */
+html.win {
+  --font: "Segoe UI Variable Text", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+}
+html.mica {
+  --window-bg: rgb(17 17 20 / 0.62);
+}
+
