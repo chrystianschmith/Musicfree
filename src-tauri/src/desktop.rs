@@ -270,7 +270,8 @@ mod thumbbar {
     static CREATED_MSG: OnceLock<u32> = OnceLock::new();
     /// prev, play, pause, next — as raw handles so they can live in a static.
     static ICONS: OnceLock<[isize; 4]> = OnceLock::new();
-    static EMIT: OnceLock<Box<dyn Fn(&str) + Send + Sync>> = OnceLock::new();
+    type Emit = Box<dyn Fn(&str) + Send + Sync>;
+    static EMIT: OnceLock<Emit> = OnceLock::new();
 
     fn hwnd() -> HWND {
         HWND(HWND_RAW.load(Ordering::Relaxed) as *mut core::ffi::c_void)

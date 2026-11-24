@@ -15,7 +15,12 @@ vi.mock("@tauri-apps/api/event", () => ({
 
 import { handleMediaCommand, initDesktop, platformClass } from "./desktop";
 
-const t = (n: number): Track => ({ id: `t${n}`, title: `T${n}`, artists: [{ name: "A" }], thumbs: [] });
+const t = (n: number): Track => ({
+  id: `t${n}`,
+  title: `T${n}`,
+  artists: [{ name: "A" }],
+  thumbs: [],
+});
 const WIN = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/157.0 Edg/157.0";
 
 beforeEach(() => {
@@ -52,7 +57,9 @@ describe("handleMediaCommand", () => {
 describe("initDesktop", () => {
   it("marks the platform and turns on the Mica styles when the window has the backdrop", async () => {
     (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
-    invoke.mockImplementation(async (cmd: string) => (cmd === "desktop_backdrop" ? "mica" : undefined));
+    invoke.mockImplementation(async (cmd: string) =>
+      cmd === "desktop_backdrop" ? "mica" : undefined,
+    );
     await initDesktop(WIN);
     const html = document.documentElement.classList;
     expect(html.contains("win")).toBe(true);

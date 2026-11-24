@@ -1,3 +1,5 @@
+import { isTauri } from "../../lib/platform";
+import { openMiniPlayer } from "../mini/openMini";
 import { useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import {
@@ -6,6 +8,7 @@ import {
   IconHeartFilled,
   IconList,
   IconMicrophone2,
+  IconPictureInPictureTop,
   IconPlayerPauseFilled,
   IconPlayerPlayFilled,
   IconPlayerSkipBack,
@@ -139,6 +142,14 @@ export function PlayerBar() {
           active={ui.nowPlayingOpen && ui.nowPlayingTab === "queue"}
           onClick={() => ui.openNowPlaying("queue")}
         />
+        {isTauri() && (
+          <IconButton
+            icon={IconPictureInPictureTop}
+            label="Mini player"
+            size={18}
+            onClick={() => void openMiniPlayer()}
+          />
+        )}
         <IconButton
           icon={IconLayoutSidebarRight}
           label="Painel lateral"

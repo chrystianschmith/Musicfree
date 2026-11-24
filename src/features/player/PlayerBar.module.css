@@ -53,7 +53,7 @@
 .controls {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 10px;
 }
 .play {
   margin: 0 2px;
@@ -76,7 +76,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 14px;
+  gap: 2px;
 }
 .volume {
   max-width: 96px;

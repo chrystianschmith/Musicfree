@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Route, Routes } from "react-router-dom";
 import { Layout } from "./app/Layout";
+import { MiniPlayer } from "./features/mini/MiniPlayer";
 import { HomePage } from "./features/home/HomePage";
 import { ExplorePage } from "./features/explore/ExplorePage";
 import { SearchPage } from "./features/search/SearchPage";
@@ -27,6 +28,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <HashRouter>
         <Routes>
+          <Route path="mini" element={<MiniPlayer />} />
           <Route element={<Layout />}>
             <Route index element={<HomePage />} />
             <Route path="explore" element={<ExplorePage />} />
