@@ -1,11 +1,11 @@
-import { getSource } from "../../sources";
 import { usePlayer } from "../../store/player";
+import { recommender } from "./engine";
 
 let pendingFor: string | undefined;
 
 /**
- * Endless queue: when the current track is the last one (and repeat is off), fetch similar
- * tracks and append them so the music keeps going, like autoplay on Spotify.
+ * Endless queue: when the current track is the last one (and repeat is off), append tracks
+ * of the same style (album, artist, similar artists) so the music keeps going.
  */
 export async function extendQueueIfNeeded() {
   const s = usePlayer.getState();
@@ -13,8 +13,12 @@ export async function extendQueueIfNeeded() {
   if (!cur || s.repeat !== "off" || s.upcoming().length > 0 || pendingFor === cur.id) return;
   pendingFor = cur.id;
   try {
-    const radio = await getSource().radio(cur.id);
-    usePlayer.getState().appendTracks(radio.slice(0, 25));
+    const next = await recommender().recommendFor([cur], {
+      limit: 25,
+      heard: s.queue,
+      maxPerArtist: 5,
+    });
+    usePlayer.getState().appendTracks(next);
   } catch (e) {
     console.warn("[autoplay] could not extend the queue", e);
     pendingFor = undefined;

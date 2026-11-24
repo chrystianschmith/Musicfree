@@ -16,7 +16,12 @@ vi.mock("../../db", () => ({ getRepo: vi.fn(() => new Promise(() => undefined)) 
 
 import { AudioEngine } from "./AudioEngine";
 
-const t = (n: number): Track => ({ id: `t${n}`, title: `T${n}`, artists: [{ name: "A" }], thumbs: [] });
+const t = (n: number): Track => ({
+  id: `t${n}`,
+  title: `T${n}`,
+  artists: [{ name: "A" }],
+  thumbs: [],
+});
 
 function mount() {
   const { container } = render(

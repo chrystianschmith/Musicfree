@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getSource } from "../../sources";
 import type { Shelf, Track } from "../../sources/types";
 import { dailyPick, seedTracks, topArtists, topTracks } from "../../lib/taste";
 import { loadTaste } from "./store";
+import { recommender } from "./engine";
 
 const asTracks = (title: string, tracks: Track[]): Shelf => ({
   title,
@@ -15,34 +15,22 @@ export async function buildPersonalShelves(now = Date.now()): Promise<Shelf[]> {
   const taste = await loadTaste();
   const top = topTracks(taste, now, 10);
   if (top.length < 2) return [];
-  const seeds = seedTracks(taste, now, 3);
-  const radios = await Promise.all(
-    seeds.map((s) =>
-      getSource()
-        .radio(s.id)
-        .catch(() => [] as Track[]),
-    ),
-  );
-  const heard = new Set(Object.keys(taste.tracks));
+  // Rotate the seeds day by day among the listener's favourites so the mix changes daily.
+  const favourites = seedTracks(taste, now, 5);
+  const seeds = dailyPick(favourites, 3, now);
+  const favourite = favourites[0];
+  const heard = Object.values(taste.tracks).map((e) => e.track);
+  const rec = recommender();
+  const [mix, because] = await Promise.all([
+    rec.recommendFor(seeds, { limit: 12, heard }),
+    rec.recommendFor([favourite], { limit: 10, heard }),
+  ]);
   const shelves: Shelf[] = [];
-
-  // Interleave the radios so the mix is not one artist after another, then keep unheard tracks.
-  const pool: Track[] = [];
-  const seen = new Set<string>();
-  for (let i = 0; i < 25; i++)
-    for (const r of radios) {
-      const t = r[i];
-      if (t && !seen.has(t.id) && !heard.has(t.id)) {
-        seen.add(t.id);
-        pool.push(t);
-      }
-    }
-  if (pool.length >= 4) shelves.push(asTracks("Seu mix de hoje", dailyPick(pool, 12, now)));
+  if (mix.length >= 4) shelves.push(asTracks("Seu mix de hoje", mix));
 
   shelves.push(asTracks("Voltar a ouvir", top.slice(0, 8)));
 
-  const because = (radios[0] ?? []).filter((t) => t.id !== seeds[0].id).slice(0, 10);
-  if (because.length >= 3) shelves.push(asTracks(`Porque você ouviu ${seeds[0].title}`, because));
+  if (because.length >= 3) shelves.push(asTracks(`Porque você ouviu ${favourite.title}`, because));
 
   const artists = topArtists(taste, now, 8);
   if (artists.length >= 2)
